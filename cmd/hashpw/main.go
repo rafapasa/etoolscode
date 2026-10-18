@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rafapasa/deepseek-autocode/cmd/ui"
+	"github.com/rafapasa/etoolscode/cmd/ui"
 )
 
 func main() {

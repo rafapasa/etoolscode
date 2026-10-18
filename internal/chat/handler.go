@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rafapasa/deepseek-autocode/internal/config"
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 type Service struct {

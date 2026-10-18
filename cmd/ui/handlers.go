@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rafapasa/deepseek-autocode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/config"
 )
 
 type ProjectInfo struct {

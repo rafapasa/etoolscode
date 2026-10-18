@@ -15,13 +15,24 @@ const (
 	LLM_GEMINI   = 3
 )
 
+type LLMProvider struct {
+	Enabled bool   `json:"enabled"`
+	APIKey  string `json:"api_key,omitempty"`
+	Model   string `json:"model"`
+	BaseURL string `json:"base_url,omitempty"`
+}
+
 type Config struct {
 	// Fixa - vem do .env
 	LlmClient      int    `json:"llm_client"`
 	DeepSeekApiKey string `json:"deepseek_api_key"`
 	MetaApiKey     string `json:"meta_api_key"`
 	GeminiApiKey   string `json:"gemini_api_key"`
+	ClaudeApiKey   string `json:"claude_api_key"`
+	OpenAIApiKey   string `json:"openai_api_key"`
 	HttpPort       int    `json:"http_port"`
+
+	LLMProviders map[string]LLMProvider `json:"llm_providers,omitempty"`
 
 	// Dinâmica - vem da UI e é salva em ~/.ds-ac/config.json, mas também pode vir do .env
 	IssuesDir       string `json:"issues_dir"`

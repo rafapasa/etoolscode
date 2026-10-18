@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 // LlmInterface é a fonte única. Mantive a assinatura original do seu Chat() para não quebrar.

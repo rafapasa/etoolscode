@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 // RunCommandTool é a definição compartilhada da tool run_command (issue e chat).

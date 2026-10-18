@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rafapasa/deepseek-autocode/internal/core"
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/core"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 const (

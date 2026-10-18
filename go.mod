@@ -1,6 +1,6 @@
-module github.com/rafapasa/deepseek-autocode
+module github.com/rafapasa/etoolscode
 
-go 1.26.7
+go 1.26.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.15

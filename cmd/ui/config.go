@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rafapasa/deepseek-autocode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/config"
 )
 
 type Config struct {

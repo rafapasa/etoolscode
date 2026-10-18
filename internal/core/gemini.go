@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 type GeminiClient struct {

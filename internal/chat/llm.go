@@ -1,9 +1,9 @@
 package chat
 
 import (
-	"github.com/rafapasa/deepseek-autocode/internal/config"
-	"github.com/rafapasa/deepseek-autocode/internal/core"
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/core"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 // ChatLLM é só um wrapper - não tem URL, model ou key hardcodado.

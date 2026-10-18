@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rafapasa/deepseek-autocode/internal/chat"
-	"github.com/rafapasa/deepseek-autocode/internal/config"
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/chat"
+	"github.com/rafapasa/etoolscode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 type ChatHandler struct {

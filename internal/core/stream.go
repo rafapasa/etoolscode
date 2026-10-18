@@ -8,7 +8,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/rafapasa/deepseek-autocode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
 func parseStream(body io.Reader, onDelta func(string), onToolCall func(dto.ToolCall)) error {

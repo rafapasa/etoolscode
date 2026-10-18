@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/rafapasa/deepseek-autocode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/config"
 )
 
 type Run struct {

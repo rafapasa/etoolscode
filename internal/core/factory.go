@@ -1,6 +1,6 @@
 package core
 
-import "github.com/rafapasa/deepseek-autocode/internal/config"
+import "github.com/rafapasa/etoolscode/internal/config"
 
 func NewLlmClient(cfg config.Config) LlmInterface {
 	switch cfg.LlmClient {
