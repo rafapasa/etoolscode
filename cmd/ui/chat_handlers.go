@@ -124,12 +124,16 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 			for _, tc := range toolCalls {
 				result := chat.ExecuteTool(projectRoot, tc.Function.Name, tc.Function.Arguments)
 				writeSSEChat(w, toolEvent(tc.Function.Name, tc.Function.Arguments, result))
+				// Sempre passar o Content real pra LLM. O Success é só hint pra UI
+				// (mostra ícone de erro no chat). Quando run_command falha (exit != 0),
+				// o Content tem "exit=N\n<stderr do compilador>" e descartar isso
+				// deixa o LLM cego (não vê o erro real do build/teste).
 				content := result.Content
-				if !result.Success {
+				if content == "" && result.Error != "" {
 					content = "ERRO: " + result.Error
-					if content == "ERRO: " {
-						content = "ERRO: falha na tool " + tc.Function.Name
-					}
+				}
+				if content == "" {
+					content = "ERRO: falha na tool " + tc.Function.Name
 				}
 				session.Messages = append(session.Messages, dto.Message{
 					Role:       "tool",
