@@ -243,6 +243,7 @@ func jsonStringChat(v any) string {
 
 func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 	path := ""
+	detail := ""
 	var args map[string]interface{}
 	_ = json.Unmarshal([]byte(argsJSON), &args)
 	if args != nil {
@@ -255,20 +256,98 @@ func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 	if path == "" && (name == "list_files" || name == "list_dir") {
 		path = "."
 	}
+
 	kind := "read"
 	switch name {
 	case "list_files", "list_dir":
 		kind = "list"
 	case "write_file", "search_replace", "apply_patch":
 		kind = "write"
+	case "run_command":
+		kind = "command"
+	case "git_status", "git_diff", "git_branch", "git_checkout":
+		kind = "git"
 	}
+
+	switch name {
+	case "read_file":
+		if result.Success {
+			detail = fmt.Sprintf("%d bytes", len(result.Content))
+		} else {
+			detail = result.Error
+		}
+	case "write_file":
+		if result.Success {
+			detail = fmt.Sprintf("%d bytes escritos", len(result.Content))
+		} else {
+			detail = result.Error
+		}
+	case "search_replace":
+		if result.Success {
+			detail = result.Content
+		} else {
+			detail = result.Error
+		}
+	case "list_files", "list_dir":
+		if result.Success {
+			itens := 0
+			for _, line := range strings.Split(strings.TrimSpace(result.Content), "\n") {
+				if strings.TrimSpace(line) != "" {
+					itens++
+				}
+			}
+			detail = fmt.Sprintf("%d itens", itens)
+		} else {
+			detail = result.Error
+		}
+	case "run_command":
+		cmd, _ := args["command"].(string)
+		detail = "$ " + cmd
+		if strings.HasPrefix(result.Content, "exit=") {
+			if nl := strings.Index(result.Content, "\n"); nl >= 0 {
+				exitLine := result.Content[:nl]
+				out := strings.TrimSpace(result.Content[nl+1:])
+				detail += " — " + exitLine
+				if out != "" {
+					if len(out) > 300 {
+						out = out[:300] + "..."
+					}
+					detail += "\n" + out
+				}
+			}
+		}
+	case "git_status":
+		detail = "status"
+	case "git_diff":
+		p, _ := args["path"].(string)
+		if p != "" {
+			detail = "diff " + p
+		} else {
+			detail = "diff"
+		}
+	case "git_branch":
+		n, _ := args["name"].(string)
+		detail = "branch " + n
+	case "git_checkout":
+		n, _ := args["name"].(string)
+		detail = "checkout " + n
+	}
+
+	if detail == "" && !result.Success {
+		detail = result.Error
+	}
+	if detail == "" && result.Success {
+		detail = "ok"
+	}
+
 	return fiber.Map{
-		"type":  "tool",
-		"name":  name,
-		"kind":  kind,
-		"path":  path,
-		"ok":    result.Success,
-		"error": result.Error,
-		"bytes": len(result.Content),
+		"type":   "tool",
+		"name":   name,
+		"kind":   kind,
+		"path":   path,
+		"ok":     result.Success,
+		"error":  result.Error,
+		"bytes":  len(result.Content),
+		"detail": detail,
 	}
 }
