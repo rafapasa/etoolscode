@@ -130,7 +130,29 @@ func (o *Orchestrator) Start(req dto.Request) error {
 				return nil
 			}
 
+			startTool := time.Now()
 			result, err := executor.Execute(call)
+			toolPath := ""
+			if call.Function.Name == "write_file" || call.Function.Name == "read_file" || call.Function.Name == "list_dir" {
+				var arg struct {
+					Path string `json:"path"`
+				}
+				_ = json.Unmarshal([]byte(call.Function.Arguments), &arg)
+				toolPath = arg.Path
+			}
+			errStr := ""
+			if err != nil {
+				errStr = err.Error()
+			}
+			_ = NewAuditService().Log(AuditEntry{
+				Project:    req.Project,
+				IssueID:    req.Issue,
+				Tool:       call.Function.Name,
+				Path:       toolPath,
+				Success:    err == nil,
+				Error:      errStr,
+				DurationMs: time.Since(startTool).Milliseconds(),
+			})
 			if err != nil {
 				result = fmt.Sprintf("ERRO NA FERRAMENTA: %v", err)
 				fmt.Printf("[Tool] erro: %v\n", err)

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -127,23 +128,39 @@ func StartPro(cfg *config.Config) error {
 
 	// Git API (JSON)
 	resolveGitRoot := func(c *fiber.Ctx) string {
-		if r := c.Query("root"); r != "" {
+		if r := strings.TrimSpace(c.Query("root")); r != "" {
 			return r
 		}
-		if r := c.Query("project"); r != "" {
-			// tenta raiz do projeto via sibling de issues
-			if cfg.IssuesDir != "" {
-				cand := filepath.Join(filepath.Dir(cfg.IssuesDir), r)
-				if st, err := os.Stat(cand); err == nil && st.IsDir() {
-					return cand
+		proj := strings.TrimSpace(c.Query("project"))
+		if proj == "" {
+			var body struct {
+				Root    string `json:"root"`
+				Project string `json:"project"`
+			}
+			_ = c.BodyParser(&body)
+			if body.Root != "" {
+				return body.Root
+			}
+			proj = body.Project
+		}
+		if proj != "" && cfg.IssuesDir != "" {
+			// projeto.json -> raiz
+			data, err := os.ReadFile(filepath.Join(cfg.IssuesDir, proj, "projeto.json"))
+			if err == nil {
+				var meta struct {
+					Raiz string `json:"raiz"`
+				}
+				if json.Unmarshal(data, &meta) == nil && strings.TrimSpace(meta.Raiz) != "" {
+					return strings.TrimSpace(meta.Raiz)
 				}
 			}
-			return filepath.Join(os.Getenv("HOME"), "prj", r)
+			cand := filepath.Join(filepath.Dir(cfg.IssuesDir), proj)
+			if st, err := os.Stat(cand); err == nil && st.IsDir() {
+				return cand
+			}
+			return filepath.Join(os.Getenv("HOME"), "prj", proj)
 		}
-		if cfg.IssuesDir != "" {
-			return filepath.Dir(cfg.IssuesDir)
-		}
-		return "."
+		return ""
 	}
 
 	api.Get("/git/status", func(c *fiber.Ctx) error {
@@ -245,6 +262,28 @@ func StartPro(cfg *config.Config) error {
 	})
 
 	
+	api.Get("/git/file", func(c *fiber.Ctx) error {
+		root := resolveGitRoot(c)
+		file := c.Query("file")
+		if file == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "file obrigatorio"})
+		}
+		original, _ := tools.GitFileAtHEAD(root, file)
+		modified, err2 := tools.GitFileWorking(root, file)
+		if err2 != nil && original == "" {
+			return c.Status(400).JSON(fiber.Map{"error": err2.Error()})
+		}
+		if modified == "" && err2 != nil {
+			modified = ""
+		}
+		return c.JSON(fiber.Map{
+			"root":     root,
+			"file":     file,
+			"original": original,
+			"modified": modified,
+		})
+	})
+
 	api.Get("/audit/recent", func(c *fiber.Ctx) error {
 		limit := 20
 		if v := c.Query("limit"); v != "" {

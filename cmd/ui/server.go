@@ -3,6 +3,8 @@ package ui
 import (
 	"embed"
 	"fmt"
+	"os"
+	"encoding/json"
 	"io/fs"
 	"mime"
 	"path"
@@ -14,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/rafapasa/etoolscode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/core/tools"
 	"github.com/rafapasa/etoolscode/internal/service"
 )
 
@@ -121,6 +124,14 @@ func Start(cfg *config.Config) error {
 		return c.SendStatus(204)
 	})
 
+	app.Get("/pro", func(c *fiber.Ctx) error {
+		data, err := fs.ReadFile(templatesFS, "templates/layout_pro.html")
+		if err != nil {
+			return c.Status(404).SendString("layout_pro.html nao encontrado")
+		}
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.Send(data)
+	})
 	app.Get("/", h.Index)
 	api := app.Group("/api")
 	api.Get("/config", h.GetConfig)
@@ -153,6 +164,83 @@ func Start(cfg *config.Config) error {
 	chatApi.Delete("/:id", ch.DeleteChat)
 	chatApi.Post("/:id/message", ch.PostMessage)
 	chatApi.Post("/:id/export", ch.ExportChat)
+
+	
+	resolveGitRoot := func(c *fiber.Ctx) string {
+		if r := strings.TrimSpace(c.Query("root")); r != "" {
+			return r
+		}
+		proj := strings.TrimSpace(c.Query("project"))
+		if proj != "" && cfg.IssuesDir != "" {
+			data, err := os.ReadFile(filepath.Join(cfg.IssuesDir, proj, "projeto.json"))
+			if err == nil {
+				var meta struct {
+					Raiz string `json:"raiz"`
+				}
+				if json.Unmarshal(data, &meta) == nil && strings.TrimSpace(meta.Raiz) != "" {
+					return strings.TrimSpace(meta.Raiz)
+				}
+			}
+			cand := filepath.Join(filepath.Dir(cfg.IssuesDir), proj)
+			if st, err := os.Stat(cand); err == nil && st.IsDir() {
+				return cand
+			}
+		}
+		return ""
+	}
+	api.Get("/git/status", func(c *fiber.Ctx) error {
+		root := resolveGitRoot(c)
+		files, err := tools.GitStatus(root)
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error(), "root": root})
+		}
+		branch, _ := tools.GitCurrentBranch(root)
+		return c.JSON(fiber.Map{"root": root, "branch": branch, "files": files})
+	})
+	api.Get("/git/diff", func(c *fiber.Ctx) error {
+		root := resolveGitRoot(c)
+		file := c.Query("file")
+		var diff string
+		var err error
+		if file != "" {
+			diff, err = tools.GitDiffFile(root, file)
+		} else {
+			diff, err = tools.GitDiff(root, c.Query("staged") == "1")
+		}
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"root": root, "file": file, "diff": diff})
+	})
+	api.Get("/git/file", func(c *fiber.Ctx) error {
+		root := resolveGitRoot(c)
+		file := c.Query("file")
+		original, _ := tools.GitFileAtHEAD(root, file)
+		modified, err2 := tools.GitFileWorking(root, file)
+		if err2 != nil && original == "" {
+			return c.Status(400).JSON(fiber.Map{"error": err2.Error()})
+		}
+		return c.JSON(fiber.Map{"root": root, "file": file, "original": original, "modified": modified})
+	})
+	api.Post("/git/branch", func(c *fiber.Ctx) error {
+		var body struct {
+			Name    string `json:"name"`
+			Root    string `json:"root"`
+			Project string `json:"project"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		root := body.Root
+		if root == "" {
+			root = resolveGitRoot(c)
+		}
+		if err := tools.GitCreateBranch(root, body.Name); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		branch, _ := tools.GitCurrentBranch(root)
+		return c.JSON(fiber.Map{"ok": true, "branch": branch, "root": root})
+	})
 
 	api.Get("/audit/recent", func(c *fiber.Ctx) error {
 		limit := 20
