@@ -202,20 +202,34 @@ func GitCommit(root, message string, files []string) (string, error) {
 // EnsureBranch cria/checkout dsac/<project>/<issue> se houver .git.
 // project e issue vazios geram fallback com timestamp.
 func EnsureBranch(root, project, issueID string) (string, string, error) {
+	return EnsureBranchNamed(root, "", project, issueID)
+}
+
+// EnsureBranchNamed cria/checkout da branch.
+// Se explicit != "", usa esse nome (sanitizado), ex: "dev-123".
+// Senão: dsac/<projeto>/<issue>.
+func EnsureBranchNamed(root, explicit, project, issueID string) (string, string, error) {
 	if !isGitRepo(root) {
 		return "", "", nil
 	}
-	p := sanitizeBranch(project)
-	iss := sanitizeBranch(issueID)
-	if p == "" {
-		p = "proj"
+	var branchName string
+	if strings.TrimSpace(explicit) != "" {
+		branchName = sanitizeBranchFull(explicit)
+	} else {
+		p := sanitizeBranch(project)
+		iss := sanitizeBranch(issueID)
+		if p == "" {
+			p = "proj"
+		}
+		if iss == "" {
+			iss = fmt.Sprintf("task-%d", time.Now().Unix()%100000)
+		}
+		iss = strings.ReplaceAll(iss, "/", "-")
+		branchName = fmt.Sprintf("dsac/%s/%s", p, iss)
 	}
-	if iss == "" {
-		iss = fmt.Sprintf("task-%d", time.Now().Unix()%100000)
+	if branchName == "" {
+		return "", "", fmt.Errorf("nome de branch vazio")
 	}
-	// remove barra interna do issue para manter 2 níveis: dsac/proj/issue
-	iss = strings.ReplaceAll(iss, "/", "-")
-	branchName := fmt.Sprintf("dsac/%s/%s", p, iss)
 	cur, err := GitCurrentBranch(root)
 	if err != nil {
 		return "", "", err
@@ -225,6 +239,28 @@ func EnsureBranch(root, project, issueID string) (string, string, error) {
 	}
 	out, err := GitBranchCreate(root, branchName)
 	return out, branchName, err
+}
+
+// sanitizeBranchFull permite barras (dev/123) mas limpa caracteres perigosos.
+func sanitizeBranchFull(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == '-' || r == '_' || r == '/' || r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('-')
+		}
+	}
+	out := strings.Trim(b.String(), "-/")
+	for strings.Contains(out, "--") {
+		out = strings.ReplaceAll(out, "--", "-")
+	}
+	return out
 }
 
 func sanitizeBranch(s string) string {

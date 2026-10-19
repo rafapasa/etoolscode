@@ -51,7 +51,7 @@ func (o *Orchestrator) Start(req dto.Request) error {
 				issueID = issueID[:40]
 			}
 		}
-		if _, branch, err := tools.EnsureBranch(req.Raiz, project, issueID); err != nil {
+		if _, branch, err := tools.EnsureBranchNamed(req.Raiz, req.Branch, project, issueID); err != nil {
 			fmt.Printf("[AutoCode] aviso git branch: %v\n", err)
 			_ = NewAuditService().Log(AuditEntry{Project: project, IssueID: issueID, Tool: "git_branch", Success: false, Error: err.Error()})
 		} else if branch != "" {

@@ -11,6 +11,9 @@ type Request struct {
 	Rules     []string    `json:"rules"`
 	Arquivos  []string    `json:"arquivos"`
 	Tarefas   []Tarefa    `json:"tarefas"`
+	// Branch opcional: se preenchida, o auto-git usa este nome (ex: "dev-123").
+	// Se vazia, fallback dsac/<projeto>/<issue-file>.
+	Branch string `json:"branch,omitempty"`
 }
 
 type Tarefa struct {

@@ -130,6 +130,7 @@ func merge(base, projeto, tarefa map[string]interface{}) (dto.Request, error) {
 		out.Estrutura = projeto["estrutura"]
 	}
 	out.Tarefas = filterDummyTarefas(toTarefas(tarefa["tarefas"]))
+	out.Branch = strings.TrimSpace(toString(tarefa["branch"]))
 	if out.Raiz == "" {
 		return out, fmt.Errorf("raiz ausente (defina em projeto.json ou na issue)")
 	}

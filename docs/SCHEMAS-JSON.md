@@ -177,6 +177,7 @@ Ordem aproximada:
 ```json
 {
   "demanda": "objetivo curto e direto",
+  "branch": "dev-123",
   "raiz": "/opcional/se-nao-vier-do-projeto.json",
   "estrutura": [],
   "rules": [],
@@ -199,6 +200,7 @@ Ordem aproximada:
 | Campo           | Tipo       | Obrigatório | Descrição |
 |-----------------|------------|-------------|-----------|
 | `demanda`       | `string`   | **sim**     | Objetivo da issue (uma frase clara) |
+| `branch`        | `string`   | não         | Nome da branch git (ex: `dev-123`). Se omitido: `dsac/<projeto>/<arquivo-issue>` |
 | `arquivos`      | `string[]` | **sim**     | Lista **fechada** de paths relativos que a LLM pode ler/escrever |
 | `tarefas`       | `object[]` | **sim**     | Uma entrada por passo (em geral 1 arquivo por tarefa) |
 | `rules`         | `string[]` | não         | Regras extras desta issue (somam às do base) |
