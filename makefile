@@ -1,11 +1,11 @@
 # ============================================================
-# deepseek-autocode — Makefile
+# etoolscode — Makefile
 # ============================================================
 
 BIN_DIR    := bin
-BIN_NAME   := deepseek-autocode
+BIN_NAME   := etoolscode
 BIN_PATH   := $(BIN_DIR)/$(BIN_NAME)
-CMD_PATH   := ./cmd/deepseek-autocode
+CMD_PATH   := ./cmd/etoolscode
 SERVICE    := dsac
 PORT       := 8080
 
@@ -170,3 +170,14 @@ git-push-main:
 	@git push origin main
 	@git log -1 --oneline
 	@git status -sb
+
+.PHONY: test
+test:
+	@go test ./...
+
+.PHONY: commit-etapa
+commit-etapa:
+	@git add -A
+	@git -c user.name="Rafael Alberto Pasa" -c user.email="rafapasa@gmail.com" commit -m "$(MSG)" || true
+	@git push origin main || true
+	@git log -1 --oneline

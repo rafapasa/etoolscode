@@ -19,17 +19,7 @@ func main() {
 	uiMode := flag.Bool("ui", false, "modo interface web")
 	flag.Parse()
 
-	key := cfg.ResolveAPIKey()
-	if key == "" {
-		if c, err := ui.LoadConfig(); err == nil && c.DeepSeekApiKey != "" {
-			key = c.DeepSeekApiKey
-		}
-	}
-	if key == "" {
-		fmt.Println("❌ API Key não encontrada")
-		os.Exit(1)
-	}
-
+	// Modo UI não exige API key: a chave só é necessária ao executar issues/chat LLM.
 	if *uiMode {
 		if os.Getenv("DSAC_UI_PRO") == "1" || os.Getenv("DSAC_UI_PRO") == "true" {
 			if err := ui.StartPro(cfg); err != nil {
@@ -43,6 +33,17 @@ func main() {
 			}
 		}
 		return
+	}
+
+	key := cfg.ResolveAPIKey()
+	if key == "" {
+		if c, err := ui.LoadConfig(); err == nil && c.DeepSeekApiKey != "" {
+			key = c.DeepSeekApiKey
+		}
+	}
+	if key == "" {
+		fmt.Println("❌ API Key não encontrada")
+		os.Exit(1)
 	}
 
 	args := flag.Args()
@@ -89,6 +90,7 @@ func loadJSON(path string) (map[string]interface{}, error) {
 	json.Unmarshal(data, &out)
 	return out, nil
 }
+
 func merge(base, projeto, tarefa map[string]interface{}) (dto.Request, error) {
 	var out dto.Request
 	out.Raiz = firstNonEmpty(toString(tarefa["raiz"]), toString(projeto["raiz"]), toString(base["raiz"]))
@@ -102,7 +104,9 @@ func merge(base, projeto, tarefa map[string]interface{}) (dto.Request, error) {
 	}
 	return out, nil
 }
+
 func toString(v interface{}) string { s, _ := v.(string); return s }
+
 func toStringSlice(v interface{}) []string {
 	raw, _ := v.([]interface{})
 	var out []string
@@ -113,6 +117,7 @@ func toStringSlice(v interface{}) []string {
 	}
 	return out
 }
+
 func firstNonEmpty(v ...string) string {
 	for _, s := range v {
 		if s != "" {
