@@ -118,6 +118,12 @@ etoolscode --hash-password 'sua-senha'
 
 ---
 
+## Schemas das issues
+
+Documentação completa de `base.json`, `projeto.json` e issue JSON:
+
+→ [`docs/SCHEMAS-JSON.md`](docs/SCHEMAS-JSON.md)
+
 ## CLI (issues)
 
 ```bash
