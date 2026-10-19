@@ -1,41 +1,66 @@
-# deepseek-autocode
-Geraador de codigo pela DeepSek atreavés de API
+# etoolscode
 
+Assistente de código da eTools Tecnologia: executa issues JSON e chat com tools sobre repositórios Go (e afins).
 
-cd /home/opc/prj/deepseek-autocode
+## Requisitos
 
-# UI (background)
-make ui
+- Go 1.26+
+- Git
+- systemd (deploy VM)
 
-# UI (foreground, pra ver logs ao vivo)
-make ui-fg
+## Build e restart (VM)
 
-# Parar UI
-make kill
+```bash
+cd /home/opc/prj/etoolscode
+./restart-all.sh          # ou: make restart
+```
 
-# Reiniciar
-make restart
+Binário: `/usr/local/bin/etoolscode`  
+Compat: symlink `/usr/local/bin/deepseek-autocode` → `etoolscode`  
+Serviço: `dsac.service`
 
-# CLI
-make cli ISSUE=/home/opc/prj/issues/mcp-server-openerp/issue-cliente.json
+## UI
 
-# Trocar porta
-make ui PORT=9090
+- Clássica: `https://dsac.etoolstec.com.br/`
+- Pro (diff/audit): `https://dsac.etoolstec.com.br/pro`
 
-# Ajuda
-make help
+Senha obrigatória via env (`DSAC_UI_PASSWORD_HASH` ou equivalente — ver `.env.example`).
 
-# Limpar
-make clean
+## CLI
 
-# Senha da UI (obrigatória)
-# A UI não sobe sem senha. Gere o hash (digite a senha) e coloque no .env:
-go run ./cmd/hashpw
-#   DSAC_UI_PASSWORD_HASH='$2a$10$...'   (preferido, bcrypt)
-#   DSAC_UI_PASSWORD=...                 (alternativa em texto puro)
-#   DSAC_UI_AUTH=off                     (desativa; só para dev local)
-# Sessão: cookie de 12h, logout em /logout, 5 tentativas erradas/min por IP.
+```bash
+etoolscode /home/opc/prj/issues/<projeto>/<issue>.json
+```
 
-# run_command (tool do LLM)
-#   DSAC_SHELL_ROOT=/home/opc/prj   DSAC_SHELL_TIMEOUT=120
-#   DSAC_SHELL_MODE=allowlist|denylist   DSAC_SHELL_ALLOW=bin1,bin2
+Antes de executar (se `DSAC_GIT_AUTO_BRANCH` ≠ `false`):
+
+- cria/checkout `dsac/<projeto>/<issue>`
+- grava audit em `~/.ds-ac/audit.jsonl`
+
+## API útil
+
+| Endpoint | Descrição |
+|----------|-----------|
+| `GET /api/projects` | lista projetos em ISSUES_DIR |
+| `GET /api/tree/:project` | árvore de fontes (raiz do projeto.json) |
+| `GET /api/git/status?project=` | arquivos modificados |
+| `GET /api/git/file?project=&file=` | conteúdo HEAD × working tree |
+| `GET /api/git/diff?project=&file=` | unified diff |
+| `POST /api/git/branch` | `{ "name", "project" }` |
+| `GET /api/audit/recent?project=&limit=` | últimas ações |
+
+## Variáveis
+
+Veja `.env.example`.
+
+## Desenvolvimento
+
+```bash
+make test
+make build
+go run ./cmd/etoolscode --ui   # não exige API key
+```
+
+## Versão
+
+Ver `VERSION`.
