@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -39,15 +40,23 @@ func (o *Orchestrator) Start(req dto.Request) error {
 	fmt.Printf("[AutoCode] Demanda: %s\n\n", req.Demanda)
 
 	if o.cfg != nil && o.cfg.GitAutoBranch {
-		issueID := req.Demanda
-		if len(issueID) > 40 {
-			issueID = issueID[:40]
+		project := req.Project
+		if project == "" {
+			project = filepath.Base(strings.TrimRight(req.Raiz, "/"))
 		}
-		if _, branch, err := tools.EnsureBranch(req.Raiz, issueID); err != nil {
+		issueID := req.Issue
+		if issueID == "" {
+			issueID = req.Demanda
+			if len(issueID) > 40 {
+				issueID = issueID[:40]
+			}
+		}
+		if _, branch, err := tools.EnsureBranch(req.Raiz, project, issueID); err != nil {
 			fmt.Printf("[AutoCode] aviso git branch: %v\n", err)
+			_ = NewAuditService().Log(AuditEntry{Project: project, IssueID: issueID, Tool: "git_branch", Success: false, Error: err.Error()})
 		} else if branch != "" {
 			fmt.Printf("[AutoCode] branch: %s\n", branch)
-			_ = NewAuditService().Log(AuditEntry{Project: req.Raiz, IssueID: branch, Tool: "git_branch", Success: true})
+			_ = NewAuditService().Log(AuditEntry{Project: project, IssueID: issueID, Tool: "git_branch", Path: branch, Success: true})
 		}
 	}
 

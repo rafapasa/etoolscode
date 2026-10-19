@@ -181,3 +181,9 @@ commit-etapa:
 	@git -c user.name="Rafael Alberto Pasa" -c user.email="rafapasa@gmail.com" commit -m "$(MSG)" || true
 	@git push origin main || true
 	@git log -1 --oneline
+
+.PHONY: push-ssh
+push-ssh:
+	@git remote set-url origin git@github.com:rafapasa/etoolscode.git 2>/dev/null || git remote set-url origin git@github.com:rafapasa/deepseek-autocode.git
+	@git push -u origin main
+	@git log -5 --oneline

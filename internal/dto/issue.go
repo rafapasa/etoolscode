@@ -3,6 +3,8 @@ package dto
 // ===== Issue montada (base + projeto + tarefa) =====
 
 type Request struct {
+	Project   string      `json:"project,omitempty"`
+	Issue     string      `json:"issue,omitempty"`
 	Demanda   string      `json:"demanda"`
 	Estrutura interface{} `json:"estrutura,omitempty"`
 	Raiz      string      `json:"raiz"`

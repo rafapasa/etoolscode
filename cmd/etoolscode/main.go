@@ -72,8 +72,11 @@ func main() {
 		fmt.Printf("❌ merge: %v\n", err)
 		os.Exit(1)
 	}
+	// projeto/issue a partir do caminho da tarefa (issues/<projeto>/<issue>.json)
+	req.Issue = filepath.Base(tarefaPath)
+	req.Project = filepath.Base(filepath.Dir(tarefaPath))
 
-	o := service.NewOrchestrator(core.NewLlmClient(*cfg))
+	o := service.NewOrchestratorWithConfig(core.NewLlmClient(*cfg), cfg)
 	if err := o.Start(req); err != nil {
 		fmt.Printf("❌ Erro: %v\n", err)
 		os.Exit(1)

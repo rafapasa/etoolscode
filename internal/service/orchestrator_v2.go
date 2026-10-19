@@ -92,7 +92,7 @@ func (o *OrchestratorV2) ExecutePlan(plan *Plan, projectRoot string, approved bo
 		start := time.Now()
 		switch step.Type {
 		case StepTypeGit:
-			_, _, err = tools.EnsureBranch(projectRoot, plan.IssueID)
+			_, _, err = tools.EnsureBranch(projectRoot, plan.Project, plan.IssueID)
 		case StepTypeTest:
 			_, err = core.RunShellCommand(projectRoot, ".", "go test ./... 2>&1 | head -200")
 		}

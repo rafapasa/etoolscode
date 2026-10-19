@@ -92,7 +92,7 @@ func TestGitStatusNonRepo(t *testing.T) {
 
 func TestEnsureBranchSkipNonGit(t *testing.T) {
 	dir := testRepoRoot(t)
-	_, name, err := EnsureBranch(dir, "issue-1")
+	_, name, err := EnsureBranch(dir, "proj", "issue-1")
 	if err != nil {
 		t.Fatal(err)
 	}

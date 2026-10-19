@@ -15,8 +15,8 @@ import (
 // FileStatus representa uma linha de git status --porcelain.
 type FileStatus struct {
 	Path   string `json:"path"`
-	Index  string `json:"index"`  // status no index (1º char)
-	Work   string `json:"work"`   // status no working tree (2º char)
+	Index  string `json:"index"`
+	Work   string `json:"work"`
 	Staged bool   `json:"staged"`
 }
 
@@ -39,7 +39,6 @@ func isGitRepo(root string) bool {
 	return err == nil
 }
 
-// GitStatusRaw retorna o porcelain completo.
 func GitStatusRaw(root string) (string, error) {
 	if !isGitRepo(root) {
 		return "", fmt.Errorf("nao e repo git: %s", root)
@@ -47,7 +46,6 @@ func GitStatusRaw(root string) (string, error) {
 	return gitRun(root, root, "status", "--porcelain", "-b")
 }
 
-// GitStatus lista arquivos modificados (sem a linha de branch).
 func GitStatus(root string) ([]FileStatus, error) {
 	if !isGitRepo(root) {
 		return nil, fmt.Errorf("nao e repo git: %s", root)
@@ -65,7 +63,6 @@ func GitStatus(root string) ([]FileStatus, error) {
 		idx := string(line[0])
 		work := string(line[1])
 		path := strings.TrimSpace(line[3:])
-		// rename: "R  old -> new"
 		if strings.Contains(path, " -> ") {
 			parts := strings.Split(path, " -> ")
 			path = strings.TrimSpace(parts[len(parts)-1])
@@ -90,16 +87,60 @@ func GitDiff(root string, staged bool) (string, error) {
 	return gitRun(root, root, "diff")
 }
 
-// GitDiffFile diff de um único arquivo (working tree).
 func GitDiffFile(root, file string) (string, error) {
 	if !isGitRepo(root) {
 		return "", fmt.Errorf("nao e repo git: %s", root)
 	}
-	file = filepath.Clean(file)
-	if strings.HasPrefix(file, "..") || filepath.IsAbs(file) {
+	file = cleanRel(file)
+	if file == "" {
 		return "", fmt.Errorf("path de arquivo invalido")
 	}
 	return gitRun(root, root, "diff", "--", file)
+}
+
+// GitFileAtHEAD retorna o conteúdo do arquivo no HEAD (vazio se não existir).
+func GitFileAtHEAD(root, file string) (string, error) {
+	if !isGitRepo(root) {
+		return "", fmt.Errorf("nao e repo git: %s", root)
+	}
+	file = cleanRel(file)
+	if file == "" {
+		return "", fmt.Errorf("path de arquivo invalido")
+	}
+	out, err := gitRun(root, root, "show", "HEAD:"+filepath.ToSlash(file))
+	if err != nil {
+		// arquivo novo / inexistente no HEAD
+		if strings.Contains(out, "does not exist") || strings.Contains(out, "exists on disk") || strings.Contains(out, "fatal") {
+			return "", nil
+		}
+		return "", fmt.Errorf("%w: %s", err, strings.TrimSpace(out))
+	}
+	return out, nil
+}
+
+// GitFileWorking lê o arquivo do working tree.
+func GitFileWorking(root, file string) (string, error) {
+	file = cleanRel(file)
+	if file == "" {
+		return "", fmt.Errorf("path de arquivo invalido")
+	}
+	full, err := core.ResolveSafePath(root, file)
+	if err != nil {
+		return "", err
+	}
+	b, err := os.ReadFile(full)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func cleanRel(file string) string {
+	file = filepath.Clean(strings.TrimSpace(file))
+	if file == "." || file == ".." || strings.HasPrefix(file, "..") || filepath.IsAbs(file) {
+		return ""
+	}
+	return filepath.ToSlash(file)
 }
 
 func GitCurrentBranch(root string) (string, error) {
@@ -107,7 +148,6 @@ func GitCurrentBranch(root string) (string, error) {
 	return strings.TrimSpace(out), err
 }
 
-// GitCreateBranch cria branch e faz checkout (alias estável do plano).
 func GitCreateBranch(root, name string) error {
 	_, err := GitBranchCreate(root, name)
 	return err
@@ -129,7 +169,6 @@ func GitBranchCreate(root, name string) (string, error) {
 	return out, err
 }
 
-// GitCheckout troca para uma branch existente.
 func GitCheckout(root, branch string) error {
 	branch = sanitizeBranch(branch)
 	if branch == "" {
@@ -160,12 +199,23 @@ func GitCommit(root, message string, files []string) (string, error) {
 	return gitRun(root, root, "commit", "-m", message)
 }
 
-// EnsureBranch cria branch dsac/<issue>-<ts> se houver .git; se não houver, retorna skip silencioso.
-func EnsureBranch(root, issueID string) (string, string, error) {
+// EnsureBranch cria/checkout dsac/<project>/<issue> se houver .git.
+// project e issue vazios geram fallback com timestamp.
+func EnsureBranch(root, project, issueID string) (string, string, error) {
 	if !isGitRepo(root) {
-		return "", "", nil // skip sem erro
+		return "", "", nil
 	}
-	branchName := fmt.Sprintf("dsac/%s-%d", sanitizeBranch(issueID), time.Now().Unix()%100000)
+	p := sanitizeBranch(project)
+	iss := sanitizeBranch(issueID)
+	if p == "" {
+		p = "proj"
+	}
+	if iss == "" {
+		iss = fmt.Sprintf("task-%d", time.Now().Unix()%100000)
+	}
+	// remove barra interna do issue para manter 2 níveis: dsac/proj/issue
+	iss = strings.ReplaceAll(iss, "/", "-")
+	branchName := fmt.Sprintf("dsac/%s/%s", p, iss)
 	cur, err := GitCurrentBranch(root)
 	if err != nil {
 		return "", "", err
