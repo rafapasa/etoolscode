@@ -18,6 +18,7 @@
             <label for="projectSelector">Projeto</label>
             <select id="projectSelector" class="select-project"></select>
         </div>
+        <button type="button" class="btn-small" id="btnWorkspace" title="Pastas e projetos">⚙ Pastas</button>
     </header>
 
     <div class="container">
@@ -135,6 +136,26 @@
         </div>
     </div>
 
+    <div class="modal" id="workspaceModal">
+        <div class="modal-content edit-wide">
+            <h3>Pastas e projetos</h3>
+            <p class="muted small">Define onde ficam as issues e o código de cada projeto. Salvo em ~/.ds-ac/workspace.json</p>
+            <label class="muted small">Pasta de issues</label>
+            <input id="wsIssuesDir" placeholder="/home/opc/prj/issues" style="width:100%;margin-bottom:8px">
+            <label class="muted small">Pasta raiz de projetos (fallback)</label>
+            <input id="wsProjectsRoot" placeholder="/home/opc/prj" style="width:100%;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <strong style="font-size:0.85rem">Projetos cadastrados</strong>
+                <button type="button" class="btn-small green" id="btnWsAddRow">+ projeto</button>
+            </div>
+            <div id="wsProjectRows" style="max-height:240px;overflow:auto;margin-bottom:10px"></div>
+            <div id="wsAlert" class="alert"></div>
+            <div class="modal-actions">
+                <button class="btn ghost" data-close="workspaceModal">Cancelar</button>
+                <button class="btn primary" id="btnWsSave">Salvar</button>
+            </div>
+        </div>
+    </div>
     <div id="itemMenu" class="item-menu" hidden></div>
     <script type="module" src="/static/js/app.js"></script>
 </body>

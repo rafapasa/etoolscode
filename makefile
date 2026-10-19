@@ -187,3 +187,9 @@ push-ssh:
 	@git remote set-url origin git@github.com:rafapasa/etoolscode.git 2>/dev/null || git remote set-url origin git@github.com:rafapasa/deepseek-autocode.git
 	@git push -u origin main
 	@git log -5 --oneline
+
+.PHONY: tag-v1
+tag-v1:
+	@git tag -f v1.0.0
+	@git push origin v1.0.0 -f
+	@git log -1 --oneline

@@ -20,17 +20,11 @@ func main() {
 	flag.Parse()
 
 	// Modo UI não exige API key: a chave só é necessária ao executar issues/chat LLM.
+	// UI única (chat + issues + fontes + git).
 	if *uiMode {
-		if os.Getenv("DSAC_UI_PRO") == "1" || os.Getenv("DSAC_UI_PRO") == "true" {
-			if err := ui.StartPro(cfg); err != nil {
-				fmt.Printf("❌ Erro Pro: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			if err := ui.Start(cfg); err != nil {
-				fmt.Printf("❌ Erro: %v\n", err)
-				os.Exit(1)
-			}
+		if err := ui.Start(cfg); err != nil {
+			fmt.Printf("❌ Erro: %v\n", err)
+			os.Exit(1)
 		}
 		return
 	}

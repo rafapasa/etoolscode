@@ -41,6 +41,7 @@ REGRAS DE TRABALHO:
 4. list_files só para confirmar estrutura, não por curiosidade.
 5. Siga apperror, gokit/mapper, gokit/response e as rules do JSON acima.
 6. Quando um teste panica por logger/zap nil, inicialize o logger no teste (ou injete nop logger) antes de chamar o código de produção.
+7. Git: use git_status, git_diff, git_branch e git_checkout quando o usuário pedir branch/isolamento, ou antes de mudanças grandes. Prefira nomes dsac/<projeto>/<assunto>.
 `, projectRoot, truncate(baseContent, 12000), truncate(projetoContent, 28000), projectRoot)
 }
 

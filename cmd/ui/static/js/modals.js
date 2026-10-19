@@ -88,3 +88,68 @@ export async function submitUpload(){
   if(res.ok){ alertEl.className='alert ok'; alertEl.textContent='Upload ok'; setTimeout(()=>{ closeUploadModal(); window.dispatchEvent(new CustomEvent('explorer:reload')); },600); }
   else{ alertEl.className='alert err'; alertEl.textContent=await res.text(); }
 }
+
+function wsRowHTML(p){
+  const name = (p && p.name) || '';
+  const root = (p && p.root) || '';
+  return `<div class="ws-row" style="display:grid;grid-template-columns:1fr 2fr auto;gap:6px;margin-bottom:6px">
+    <input class="ws-name" placeholder="nome" value="${name.replace(/"/g,'&quot;')}">
+    <input class="ws-root" placeholder="/home/opc/prj/meu-projeto" value="${root.replace(/"/g,'&quot;')}">
+    <button type="button" class="btn-small ws-del">remover</button>
+  </div>`;
+}
+
+export async function openWorkspaceModal(){
+  const alert=document.getElementById('wsAlert');
+  if(alert){ alert.className='alert'; alert.textContent=''; }
+  try{
+    const w = await apiGet('/api/workspace');
+    document.getElementById('wsIssuesDir').value = w.issues_dir || '';
+    document.getElementById('wsProjectsRoot').value = w.projects_root || '';
+    const box = document.getElementById('wsProjectRows');
+    const projects = w.projects || [];
+    box.innerHTML = projects.length ? projects.map(wsRowHTML).join('') : wsRowHTML({});
+  }catch(e){
+    document.getElementById('wsProjectRows').innerHTML = wsRowHTML({});
+  }
+  document.getElementById('workspaceModal').classList.add('open');
+}
+
+export function addWorkspaceRow(){
+  const box=document.getElementById('wsProjectRows');
+  box.insertAdjacentHTML('beforeend', wsRowHTML({}));
+}
+
+export async function saveWorkspace(){
+  const issues_dir = document.getElementById('wsIssuesDir').value.trim();
+  const projects_root = document.getElementById('wsProjectsRoot').value.trim();
+  const projects = [];
+  document.querySelectorAll('#wsProjectRows .ws-row').forEach(row => {
+    const name = row.querySelector('.ws-name').value.trim();
+    const root = row.querySelector('.ws-root').value.trim();
+    if(name && root) projects.push({name, root});
+  });
+  try{
+    const res = await fetch('/api/workspace', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({issues_dir, projects_root, projects})
+    });
+    const text = await res.text();
+    if(!res.ok) throw new Error(text);
+    showAlert('wsAlert','✅ Workspace salvo', true);
+    setTimeout(() => {
+      document.getElementById('workspaceModal').classList.remove('open');
+      window.dispatchEvent(new CustomEvent('projects:reload'));
+      window.dispatchEvent(new CustomEvent('explorer:reload'));
+    }, 500);
+  }catch(e){
+    showAlert('wsAlert', e.message || String(e), false);
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if(e.target.closest('.ws-del')){
+    e.target.closest('.ws-row')?.remove();
+  }
+});

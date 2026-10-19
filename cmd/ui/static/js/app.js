@@ -176,6 +176,12 @@ function bindEvents(){
   if(bsc) bsc.addEventListener('click', () => modals.submitCreate());
   const bsu = document.getElementById('btnSubmitUpload');
   if(bsu) bsu.addEventListener('click', () => modals.submitUpload());
+  const bws = document.getElementById('btnWorkspace');
+  if(bws) bws.addEventListener('click', () => modals.openWorkspaceModal());
+  const bwa = document.getElementById('btnWsAddRow');
+  if(bwa) bwa.addEventListener('click', () => modals.addWorkspaceRow());
+  const bwsSave = document.getElementById('btnWsSave');
+  if(bwsSave) bwsSave.addEventListener('click', () => modals.saveWorkspace());
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
     const el = document.getElementById(b.dataset.close);
     if(el) el.classList.remove('open');

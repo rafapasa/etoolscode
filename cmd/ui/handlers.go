@@ -154,20 +154,7 @@ func (h *Handler) ProjectTree(c *fiber.Ctx) error {
 	if project == "" || strings.Contains(project, "..") {
 		return c.JSON(fiber.Map{"root": "", "tree": []srcNode{}})
 	}
-	projetoPath := filepath.Join(h.cfg.IssuesDir, project, "projeto.json")
-	data, err := os.ReadFile(projetoPath)
-	root := ""
-	if err == nil {
-		var meta struct {
-			Raiz string `json:"raiz"`
-		}
-		if json.Unmarshal(data, &meta) == nil {
-			root = strings.TrimSpace(meta.Raiz)
-		}
-	}
-	if root == "" && h.cfg.IssuesDir != "" {
-		root = filepath.Join(filepath.Dir(h.cfg.IssuesDir), project)
-	}
+	root := h.cfg.ResolveProjectRoot(project)
 	if root == "" {
 		return c.Status(404).SendString("raiz do projeto não encontrada")
 	}
@@ -229,18 +216,26 @@ func walkSrc(absRoot, dir string, depth, count int) ([]srcNode, int) {
 }
 
 func (h *Handler) ListProjects(c *fiber.Ctx) error {
-	if h.cfg.IssuesDir == "" {
-		return c.JSON([]string{})
+	set := map[string]struct{}{}
+	// pastas em IssuesDir
+	if h.cfg.IssuesDir != "" {
+		if entries, err := os.ReadDir(h.cfg.IssuesDir); err == nil {
+			for _, e := range entries {
+				if e.IsDir() && !strings.EqualFold(e.Name(), "concluidas") {
+					set[e.Name()] = struct{}{}
+				}
+			}
+		}
 	}
-	entries, err := os.ReadDir(h.cfg.IssuesDir)
-	if err != nil {
-		return c.Status(500).SendString(err.Error())
+	// projetos cadastrados no workspace
+	for _, p := range config.LoadWorkspace().Projects {
+		if p.Name != "" {
+			set[p.Name] = struct{}{}
+		}
 	}
 	var out []string
-	for _, e := range entries {
-		if e.IsDir() && !strings.EqualFold(e.Name(), "concluidas") {
-			out = append(out, e.Name())
-		}
+	for n := range set {
+		out = append(out, n)
 	}
 	sort.Strings(out)
 	return c.JSON(out)

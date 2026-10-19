@@ -162,17 +162,13 @@ func (s *Service) GetLLMMessages(sessionID string) ([]dto.Message, error) {
 }
 
 func (s *Service) ResolveProjectRoot(project string) string {
-	if s.cfg.IssuesDir == "" {
-		return "."
-	}
 	if project == "" {
-		return s.cfg.IssuesDir
+		return s.cfg.EffectiveIssuesDir()
 	}
-	candidate := filepath.Join(filepath.Dir(s.cfg.IssuesDir), project)
-	if _, err := os.Stat(candidate); err == nil {
-		return candidate
+	if root := s.cfg.ResolveProjectRoot(project); root != "" {
+		return root
 	}
-	return filepath.Join(s.cfg.IssuesDir, project)
+	return "."
 }
 
 func (s *Service) ExportToIssue(sessionID, demanda string) (string, error) {

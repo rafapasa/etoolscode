@@ -124,16 +124,14 @@ func Start(cfg *config.Config) error {
 		return c.SendStatus(204)
 	})
 
-	app.Get("/pro", func(c *fiber.Ctx) error {
-		data, err := fs.ReadFile(templatesFS, "templates/layout_pro.html")
-		if err != nil {
-			return c.Status(404).SendString("layout_pro.html nao encontrado")
-		}
-		c.Set("Content-Type", "text/html; charset=utf-8")
-		return c.Send(data)
-	})
+	// UI única: index.html (chat + issues + fontes + git)
+	app.Get("/pro", func(c *fiber.Ctx) error { return c.Redirect("/", 302) })
 	app.Get("/", h.Index)
 	api := app.Group("/api")
+	api.Get("/workspace", h.GetWorkspace)
+	api.Put("/workspace", h.SaveWorkspace)
+	api.Post("/workspace/projects", h.UpsertProject)
+	api.Delete("/workspace/projects/:name", h.DeleteProject)
 	api.Get("/config", h.GetConfig)
 	api.Post("/config", h.SaveConfig)
 	api.Get("/env", h.CheckEnv)

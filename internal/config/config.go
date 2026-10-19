@@ -90,6 +90,10 @@ func NewConfig() *Config {
 		}
 	}
 
+	// workspace.json pode sobrescrever IssuesDir
+	if w := LoadWorkspace(); w.IssuesDir != "" {
+		cfg.IssuesDir = w.IssuesDir
+	}
 	return cfg
 }
 

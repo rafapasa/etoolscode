@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/rafapasa/etoolscode/internal/core"
+	"github.com/rafapasa/etoolscode/internal/core/tools"
 	"github.com/rafapasa/etoolscode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/service"
 )
 
 func GetTools() []dto.Tool {
@@ -42,6 +44,55 @@ func GetTools() []dto.Tool {
 			},
 		},
 		core.RunCommandTool(),
+		{
+			Type: "function",
+			Function: dto.ToolFunction{
+				Name:        "git_status",
+				Description: "Lista arquivos modificados no repositório git do projeto (working tree).",
+				Parameters:  map[string]interface{}{"type": "object", "properties": map[string]interface{}{}},
+			},
+		},
+		{
+			Type: "function",
+			Function: dto.ToolFunction{
+				Name:        "git_diff",
+				Description: "Mostra diff git. Opcional: path de um arquivo.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"path": map[string]interface{}{"type": "string", "description": "Arquivo relativo (opcional)"},
+					},
+				},
+			},
+		},
+		{
+			Type: "function",
+			Function: dto.ToolFunction{
+				Name:        "git_branch",
+				Description: "Cria e faz checkout de uma branch (ex: dsac/projeto/feature-x). Use quando o usuário pedir branch ou antes de mudanças grandes.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"name": map[string]interface{}{"type": "string", "description": "Nome da branch"},
+					},
+					"required": []string{"name"},
+				},
+			},
+		},
+		{
+			Type: "function",
+			Function: dto.ToolFunction{
+				Name:        "git_checkout",
+				Description: "Troca para uma branch existente (ex: main).",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"name": map[string]interface{}{"type": "string"},
+					},
+					"required": []string{"name"},
+				},
+			},
+		},
 	}
 }
 
@@ -142,6 +193,57 @@ func ExecuteTool(projectRoot, toolName, argsJSON string) ToolResult {
 			return ToolResult{Success: false, Error: err.Error()}
 		}
 		return ToolResult{Success: !strings.HasPrefix(out, "exit=") || strings.HasPrefix(out, "exit=0\n"), Content: out}
+	case "git_status":
+		files, err := tools.GitStatus(projectRoot)
+		if err != nil {
+			return ToolResult{Success: false, Error: err.Error()}
+		}
+		branch, _ := tools.GitCurrentBranch(projectRoot)
+		var lines []string
+		lines = append(lines, "branch: "+branch)
+		for _, f := range files {
+			lines = append(lines, fmt.Sprintf("%s%s %s", f.Index, f.Work, f.Path))
+		}
+		if len(files) == 0 {
+			lines = append(lines, "(limpo)")
+		}
+		_ = service.NewAuditService().Log(service.AuditEntry{Project: filepath.Base(projectRoot), Tool: "git_status", Success: true})
+		return ToolResult{Success: true, Content: strings.Join(lines, "\n")}
+	case "git_diff":
+		var out string
+		var err error
+		if p := args["path"]; p != "" {
+			out, err = tools.GitDiffFile(projectRoot, p)
+		} else {
+			out, err = tools.GitDiff(projectRoot, false)
+		}
+		if err != nil {
+			return ToolResult{Success: false, Error: err.Error()}
+		}
+		if out == "" {
+			out = "(sem diff)"
+		}
+		return ToolResult{Success: true, Content: out}
+	case "git_branch":
+		name := args["name"]
+		if name == "" {
+			return ToolResult{Success: false, Error: "name obrigatorio"}
+		}
+		if err := tools.GitCreateBranch(projectRoot, name); err != nil {
+			_ = service.NewAuditService().Log(service.AuditEntry{Project: filepath.Base(projectRoot), Tool: "git_branch", Path: name, Success: false, Error: err.Error()})
+			return ToolResult{Success: false, Error: err.Error()}
+		}
+		cur, _ := tools.GitCurrentBranch(projectRoot)
+		_ = service.NewAuditService().Log(service.AuditEntry{Project: filepath.Base(projectRoot), Tool: "git_branch", Path: cur, Success: true})
+		return ToolResult{Success: true, Content: "branch atual: " + cur}
+	case "git_checkout":
+		name := args["name"]
+		if err := tools.GitCheckout(projectRoot, name); err != nil {
+			return ToolResult{Success: false, Error: err.Error()}
+		}
+		cur, _ := tools.GitCurrentBranch(projectRoot)
+		_ = service.NewAuditService().Log(service.AuditEntry{Project: filepath.Base(projectRoot), Tool: "git_checkout", Path: cur, Success: true})
+		return ToolResult{Success: true, Content: "branch atual: " + cur}
 	default:
 		return ToolResult{Success: false, Error: "tool desconhecida: " + toolName}
 	}
