@@ -12,7 +12,10 @@
 <body>
     <header>
         <div class="brand">
-            <img src="/static/logo.png" alt="eToolsCode IA" class="brand-logo">
+            <a href="/" class="brand-mark" title="eToolsCode">
+                <span class="brand-icon">&lt;/&gt;</span>
+                <span class="brand-text">eTools<span class="brand-accent">Code</span></span>
+            </a>
         </div>
         <div class="project-picker">
             <label for="projectSelector">Projeto</label>
@@ -58,8 +61,9 @@
 
         <main class="main">
             <div class="tabs">
-                <div class="tab" id="tab-issues">📋 Issues</div>
-                <div class="tab active green" id="tab-chat">💬 Chat</div>
+                <div class="tab" id="tab-issues">Issues</div>
+                <div class="tab active" id="tab-chat">Chat</div>
+                <div class="tab" id="tab-diff">Diff</div>
             </div>
 
             <div class="content-area">
@@ -88,23 +92,20 @@
                     </div>
                 </section>
 
-                <aside class="files-panel" id="filesPanel">
-                    <div class="files-tabs">
-                        <button type="button" class="files-tab active" data-files-tab="fontes">Fontes</button>
-                        <button type="button" class="files-tab" data-files-tab="diff">Diff</button>
+                <section class="chat-panel diff-panel" id="diffPanel" style="display:none">
+                    <div class="diff-toolbar">
+                        <span class="muted small" id="diffBranchInfo">—</span>
+                        <button type="button" class="btn-small" id="btnDiffRefresh">Atualizar</button>
                     </div>
-                    <div class="files-pane" id="filesPaneFontes">
-                        <div class="files-head" id="filesHead">FONTES</div>
-                        <div id="filesList" class="files-body"></div>
-                    </div>
-                    <div class="files-pane" id="filesPaneDiff" style="display:none">
-                        <div class="diff-toolbar">
-                            <span class="muted small" id="diffBranchInfo">—</span>
-                            <button type="button" class="btn-small" id="btnDiffRefresh">Atualizar</button>
-                        </div>
+                    <div class="diff-layout">
                         <div id="diffFileList" class="diff-file-list"></div>
                         <div id="diffEditor" class="diff-editor"></div>
                     </div>
+                </section>
+
+                <aside class="files-panel" id="filesPanel">
+                    <div class="files-head" id="filesHead">FONTES</div>
+                    <div id="filesList" class="files-body"></div>
                 </aside>
             </div>
         </main>

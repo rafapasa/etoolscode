@@ -22,10 +22,6 @@ function langFromPath(p) {
 }
 
 export function initDiffPanel() {
-  const tabs = document.querySelectorAll('[data-files-tab]');
-  tabs.forEach(btn => {
-    btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
-  });
   const refresh = document.getElementById('btnDiffRefresh');
   if (refresh) refresh.addEventListener('click', () => loadDiffStatus());
   const list = document.getElementById('diffFileList');
@@ -34,19 +30,6 @@ export function initDiffPanel() {
       const row = e.target.closest('[data-diff-path]');
       if (row) showFileDiff(row.dataset.diffPath);
     });
-  }
-}
-
-function switchFilesTab(tab) {
-  document.querySelectorAll('[data-files-tab]').forEach(b => {
-    b.classList.toggle('active', b.dataset.filesTab === tab);
-  });
-  const fontes = document.getElementById('filesPaneFontes');
-  const diff = document.getElementById('filesPaneDiff');
-  if (fontes) fontes.style.display = tab === 'fontes' ? 'flex' : 'none';
-  if (diff) diff.style.display = tab === 'diff' ? 'flex' : 'none';
-  if (tab === 'diff') {
-    ensureMonaco().then(() => loadDiffStatus());
   }
 }
 

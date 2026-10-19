@@ -148,6 +148,8 @@ function bindEvents(){
   if(ti) ti.addEventListener('click', () => switchTab('issues'));
   const tc = document.getElementById('tab-chat');
   if(tc) tc.addEventListener('click', () => switchTab('chat'));
+  const td = document.getElementById('tab-diff');
+  if(td) td.addEventListener('click', () => switchTab('diff'));
   const bnc = document.getElementById('btnNewChat');
   if(bnc) bnc.addEventListener('click', () => createNewChat());
   const chatList = document.getElementById('chatList');
@@ -201,16 +203,20 @@ function switchTab(tab){
   if(el) el.classList.add('active');
   const cp = document.getElementById('chatPanel');
   const ip = document.getElementById('issuesPanel');
+  const dp = document.getElementById('diffPanel');
   const explorerPane = document.getElementById('explorerPane');
   const chatsPane = document.getElementById('chatsPane');
   const filesPanel = document.getElementById('filesPanel');
   if(cp) cp.style.display = tab === 'chat' ? 'flex' : 'none';
   if(ip) ip.style.display = tab === 'issues' ? 'flex' : 'none';
-  if(explorerPane) explorerPane.style.display = tab === 'issues' ? 'block' : 'none';
+  if(dp) dp.style.display = tab === 'diff' ? 'flex' : 'none';
+  // sidebar: chats no chat; explorer em issues; em diff mantém explorer se houver projeto
+  if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff') ? 'block' : 'none';
   if(chatsPane) chatsPane.style.display = tab === 'chat' ? 'flex' : 'none';
-  if(filesPanel) filesPanel.classList.add('visible'); // fontes + diff sempre
+  if(filesPanel) filesPanel.classList.add('visible');
   if(tab === 'issues') renderIssuesForCurrent();
   if(tab === 'chat') loadChatList();
+  if(tab === 'diff') loadDiffStatus();
 }
 
 init();

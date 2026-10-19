@@ -1628,3 +1628,65 @@ header .brand-logo {
   background: rgba(239,68,68,0.08);
   color: #fca5a5;
 }
+
+
+/* Brand mark (mockup </> eToolsCode) */
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-main);
+  user-select: none;
+}
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(0, 170, 79, 0.15);
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: -0.04em;
+}
+.brand-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+.brand-accent {
+  color: var(--green);
+}
+
+/* Diff como aba central */
+#diffPanel {
+  flex-direction: column;
+  min-height: 0;
+}
+.diff-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+#diffPanel .diff-file-list {
+  width: 240px;
+  max-height: none;
+  height: 100%;
+  overflow: auto;
+  border-bottom: none;
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+#diffPanel .diff-editor {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+#diffPanel .diff-toolbar {
+  flex-shrink: 0;
+}
