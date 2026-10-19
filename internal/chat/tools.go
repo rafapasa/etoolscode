@@ -32,15 +32,25 @@ func GetTools() []dto.Tool {
 		{
 			Type: "function",
 			Function: dto.ToolFunction{
-				Name: "write_file", Description: "Cria ou sobrescreve arquivo dentro do projeto. Use para corrigir teste ou implementar funcionalidade",
+				Name: "write_file", Description: "Cria ou sobrescreve arquivo completo. Prefira search_replace para mudanças locais.",
 				Parameters: map[string]interface{}{"type": "object", "properties": map[string]interface{}{"path": map[string]interface{}{"type": "string"}, "content": map[string]interface{}{"type": "string"}}, "required": []string{"path", "content"}},
 			},
 		},
 		{
 			Type: "function",
 			Function: dto.ToolFunction{
-				Name: "apply_patch", Description: "Aplica patch diff em arquivo existente",
-				Parameters: map[string]interface{}{"type": "object", "properties": map[string]interface{}{"path": map[string]interface{}{"type": "string"}, "diff": map[string]interface{}{"type": "string"}}, "required": []string{"path", "diff"}},
+				Name: "search_replace",
+				Description: "Substitui old_string por new_string no arquivo. Preferir para edição cirúrgica. replace_all opcional.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"path":        map[string]interface{}{"type": "string"},
+						"old_string":  map[string]interface{}{"type": "string"},
+						"new_string":  map[string]interface{}{"type": "string"},
+						"replace_all": map[string]interface{}{"type": "boolean"},
+					},
+					"required": []string{"path", "old_string", "new_string"},
+				},
 			},
 		},
 		core.RunCommandTool(),
@@ -178,15 +188,18 @@ func ExecuteTool(projectRoot, toolName, argsJSON string) ToolResult {
 			return ToolResult{Success: false, Error: err.Error()}
 		}
 		return ToolResult{Success: true, Content: fmt.Sprintf("Arquivo escrito: %s (%d bytes)", args["path"], len(args["content"]))}
-	case "apply_patch":
+	case "search_replace":
 		full, err := safeJoin(args["path"])
 		if err != nil {
 			return ToolResult{Success: false, Error: err.Error()}
 		}
-		if err := os.WriteFile(full, []byte(args["diff"]), 0644); err != nil {
+		replaceAll := args["replace_all"] == "true" || args["replace_all"] == "1"
+		// args map is string-valued; also accept from raw if needed
+		n, err := core.ApplySearchReplace(full, args["old_string"], args["new_string"], replaceAll)
+		if err != nil {
 			return ToolResult{Success: false, Error: err.Error()}
 		}
-		return ToolResult{Success: true, Content: fmt.Sprintf("Patch aplicado: %s (%d bytes)", args["path"], len(args["diff"]))}
+		return ToolResult{Success: true, Content: fmt.Sprintf("search_replace ok: %s (%d ocorrência(s))", args["path"], n)}
 	case "run_command":
 		out, err := core.RunShellCommand(projectRoot, args["cwd"], args["command"])
 		if err != nil {

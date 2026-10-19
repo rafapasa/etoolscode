@@ -151,7 +151,7 @@ func (o *Orchestrator) Start(req dto.Request) error {
 				err = fmt.Errorf("%w (resposta LLM truncada por max_tokens — reenvie write_file completo ou divida a edição)", err)
 			}
 			toolPath := ""
-			if call.Function.Name == "write_file" || call.Function.Name == "read_file" || call.Function.Name == "list_dir" {
+			if call.Function.Name == "write_file" || call.Function.Name == "search_replace" || call.Function.Name == "read_file" || call.Function.Name == "list_dir" {
 				var arg struct {
 					Path string `json:"path"`
 				}
@@ -235,7 +235,8 @@ func buildSystemPrompt() string {
 
 Você tem tools disponíveis:
 - read_file: lê o conteúdo de um arquivo
-- write_file: cria ou sobrescreve um arquivo
+- search_replace: edição cirúrgica (old_string → new_string). PREFIRA esta para mudanças locais.
+- write_file: cria arquivo novo ou reescreve inteiro (evite em arquivos grandes)
 - list_dir: lista diretório (use só se absolutamente necessário)
 - run_command: NÃO USE. Não é sua função.
 - done: sinaliza conclusão
@@ -248,6 +249,7 @@ REGRAS CRÍTICAS:
 - NUNCA re-leia um arquivo que você já leu nesta sessão.
 - Execute as tarefas na ordem apresentada (id 1, 2, 3, ...).
 - Para cada tarefa, edite o arquivo indicado seguindo a descrição ao pé da letra.
+- Prefira search_replace a write_file sempre que a mudança for local (assinatura, trecho, import).
 - Se a descrição tem blocos de código, copie-os fielmente (assinaturas, WHERE, nomes).
 - Se a descrição diz "REMOVER: X, Y", remova exatamente X e Y.
 - Se a descrição diz "NÃO TOCAR: Z", não toque em Z.

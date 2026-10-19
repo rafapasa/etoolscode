@@ -255,7 +255,7 @@ func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 	switch name {
 	case "list_files", "list_dir":
 		kind = "list"
-	case "write_file", "apply_patch":
+	case "write_file", "search_replace", "apply_patch":
 		kind = "write"
 	}
 	return fiber.Map{

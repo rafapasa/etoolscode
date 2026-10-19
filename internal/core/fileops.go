@@ -44,3 +44,32 @@ func SafeJoin(raiz, rel string) (string, error) {
 
 	return targetPath, nil
 }
+
+// ApplySearchReplace substitui old por new no arquivo full.
+// replaceAll=false exige exatamente 1 ocorrência.
+// Retorna quantas substituições foram feitas.
+func ApplySearchReplace(full, old, new string, replaceAll bool) (int, error) {
+	data, err := os.ReadFile(full)
+	if err != nil {
+		return 0, err
+	}
+	content := string(data)
+	count := strings.Count(content, old)
+	if count == 0 {
+		return 0, fmt.Errorf("old_string não encontrado em %s (confira espaços/indentação)", full)
+	}
+	if !replaceAll && count > 1 {
+		return 0, fmt.Errorf("old_string aparece %d vezes em %s; amplie o contexto ou use replace_all=true", count, full)
+	}
+	var out string
+	if replaceAll {
+		out = strings.ReplaceAll(content, old, new)
+	} else {
+		out = strings.Replace(content, old, new, 1)
+		count = 1
+	}
+	if err := WriteFile(full, out); err != nil {
+		return 0, err
+	}
+	return count, nil
+}

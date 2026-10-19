@@ -57,7 +57,7 @@ func BuildTools() []dto.Tool {
 			Type: "function",
 			Function: dto.ToolFunction{
 				Name:        "write_file",
-				Description: "Cria ou sobrescreve um arquivo com conteúdo completo. Use SOMENTE quando a demanda pedir modificação.",
+				Description: "Cria ou sobrescreve um arquivo com conteúdo completo. Prefira search_replace para mudanças locais. Use write_file só para arquivo novo ou reescrita inevitável.",
 				Parameters: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -71,6 +71,35 @@ func BuildTools() []dto.Tool {
 						},
 					},
 					"required": []string{"path", "content"},
+				},
+			},
+		},
+		{
+			Type: "function",
+			Function: dto.ToolFunction{
+				Name: "search_replace",
+				Description: "Edição cirúrgica: substitui old_string por new_string em um arquivo existente. Preferir esta tool a write_file para mudanças locais. old_string deve ser única no arquivo (ou use replace_all=true). Falha se não encontrar ou se houver múltiplas ocorrências sem replace_all.",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"path": map[string]interface{}{
+							"type":        "string",
+							"description": "Caminho relativo à raiz",
+						},
+						"old_string": map[string]interface{}{
+							"type":        "string",
+							"description": "Trecho exato a localizar (inclua contexto para unicidade)",
+						},
+						"new_string": map[string]interface{}{
+							"type":        "string",
+							"description": "Trecho substituto (pode ser vazio para remover)",
+						},
+						"replace_all": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Se true, substitui todas as ocorrências. Default false (exige match único).",
+						},
+					},
+					"required": []string{"path", "old_string", "new_string"},
 				},
 			},
 		},
@@ -122,6 +151,8 @@ func (t *ToolExecutor) Execute(call dto.ToolCall) (string, error) {
 		return t.readFile(call.Function.Arguments)
 	case "write_file":
 		return t.writeFile(call.Function.Arguments)
+	case "search_replace":
+		return t.searchReplace(call.Function.Arguments)
 	case "list_dir":
 		return t.listDir(call.Function.Arguments)
 	case "run_command":
@@ -181,6 +212,33 @@ func (t *ToolExecutor) writeFile(args string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("arquivo escrito: %s (%d bytes)", p.Path, len(p.Content)), nil
+}
+
+func (t *ToolExecutor) searchReplace(args string) (string, error) {
+	var p struct {
+		Path       string `json:"path"`
+		OldString  string `json:"old_string"`
+		NewString  string `json:"new_string"`
+		ReplaceAll bool   `json:"replace_all"`
+	}
+	if err := json.Unmarshal([]byte(args), &p); err != nil {
+		return "", err
+	}
+	if p.Path == "" {
+		return "", fmt.Errorf("path obrigatório")
+	}
+	if p.OldString == "" {
+		return "", fmt.Errorf("old_string obrigatório (não pode ser vazio)")
+	}
+	full, err := t.safePath(p.Path)
+	if err != nil {
+		return "", err
+	}
+	n, err := ApplySearchReplace(full, p.OldString, p.NewString, p.ReplaceAll)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("search_replace ok: %s (%d ocorrência(s))", p.Path, n), nil
 }
 
 func (t *ToolExecutor) listDir(args string) (string, error) {
