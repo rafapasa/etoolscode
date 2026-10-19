@@ -8,9 +8,21 @@ import (
 	"testing"
 )
 
+// pathguard só permite sob /home/opc/prj — testes usam pasta local do projeto.
+func testRepoRoot(t *testing.T) string {
+	t.Helper()
+	base := "/home/opc/prj/etoolscode/.git-test-tmp"
+	_ = os.RemoveAll(base)
+	if err := os.MkdirAll(base, 0755); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(base) })
+	return base
+}
+
 func initTempRepo(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
+	dir := testRepoRoot(t)
 	run := func(args ...string) {
 		cmd := exec.Command("git", args...)
 		cmd.Dir = dir
@@ -64,7 +76,6 @@ func TestGitCreateBranchAndCheckout(t *testing.T) {
 		t.Fatalf("branch atual=%s", cur)
 	}
 	if err := GitCheckout(dir, "main"); err != nil {
-		// algumas versões usam master
 		if err2 := GitCheckout(dir, "master"); err2 != nil {
 			t.Fatalf("checkout main/master: %v / %v", err, err2)
 		}
@@ -72,7 +83,7 @@ func TestGitCreateBranchAndCheckout(t *testing.T) {
 }
 
 func TestGitStatusNonRepo(t *testing.T) {
-	dir := t.TempDir()
+	dir := testRepoRoot(t)
 	_, err := GitStatus(dir)
 	if err == nil {
 		t.Fatal("esperava erro fora de repo")
@@ -80,7 +91,7 @@ func TestGitStatusNonRepo(t *testing.T) {
 }
 
 func TestEnsureBranchSkipNonGit(t *testing.T) {
-	dir := t.TempDir()
+	dir := testRepoRoot(t)
 	_, name, err := EnsureBranch(dir, "issue-1")
 	if err != nil {
 		t.Fatal(err)
