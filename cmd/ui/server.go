@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/rafapasa/etoolscode/internal/config"
+	"github.com/rafapasa/etoolscode/internal/service"
 )
 
 var (
@@ -152,6 +153,12 @@ func Start(cfg *config.Config) error {
 	chatApi.Delete("/:id", ch.DeleteChat)
 	chatApi.Post("/:id/message", ch.PostMessage)
 	chatApi.Post("/:id/export", ch.ExportChat)
+
+	api.Get("/audit/recent", func(c *fiber.Ctx) error {
+		limit := 20
+		items := service.NewAuditService().List(c.Query("project"), limit)
+		return c.JSON(fiber.Map{"items": items, "count": len(items)})
+	})
 
 	fmt.Printf("[eTools-Code] http://localhost:%d - ISSUES_DIR=%s\n", cfg.HttpPort, cfg.IssuesDir)
 	return app.Listen(fmt.Sprintf(":%d", cfg.HttpPort))

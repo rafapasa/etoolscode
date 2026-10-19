@@ -243,6 +243,19 @@ func StartPro(cfg *config.Config) error {
 		return c.JSON(plan)
 	})
 
+	
+	api.Get("/audit/recent", func(c *fiber.Ctx) error {
+		limit := 20
+		if v := c.Query("limit"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 100 {
+				limit = n
+			}
+		}
+		project := c.Query("project")
+		items := service.NewAuditService().List(project, limit)
+		return c.JSON(fiber.Map{"items": items, "count": len(items)})
+	})
+
 	fmt.Printf("[eTools-Code Pro] http://localhost:%d\n", cfg.HttpPort)
 	return app.Listen(fmt.Sprintf(":%d", cfg.HttpPort))
 }
