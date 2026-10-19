@@ -99,25 +99,39 @@ func (o *Orchestrator) Start(req dto.Request) error {
 			resp.Usage.TotalTokens, totalTokens, choice.FinishReason)
 
 		msg := choice.Message
+		// Garante IDs nas tool_calls (alguns providers omitem quando truncam)
+		for ti := range msg.ToolCalls {
+			if msg.ToolCalls[ti].ID == "" {
+				msg.ToolCalls[ti].ID = fmt.Sprintf("call_%d_%d", i+1, ti+1)
+			}
+			if msg.ToolCalls[ti].Type == "" {
+				msg.ToolCalls[ti].Type = "function"
+			}
+		}
 		messages = append(messages, msg)
 
-		// 3. Tratamento para saída truncada por max_tokens
-		if choice.FinishReason == "length" {
-			fmt.Println("[AutoCode] AVISO: output truncado (max_tokens). Solicitando continuidade...")
-			messages = append(messages, dto.Message{
-				Role:    "user",
-				Content: "Sua resposta anterior foi truncada pelo limite de tokens. Por favor, continue de onde parou de forma mais concisa.",
-			})
-		}
-
-		// Se não houver chamadas de ferramenta, finalizou
+		// Sem tool_calls: resposta final (ou truncada de texto)
 		if len(msg.ToolCalls) == 0 {
+			if choice.FinishReason == "length" {
+				fmt.Println("[AutoCode] AVISO: texto truncado (max_tokens). Solicitando continuidade...")
+				messages = append(messages, dto.Message{
+					Role:    "user",
+					Content: "Sua resposta anterior foi truncada. Continue de onde parou, de forma concisa. Se a tarefa terminou, chame done.",
+				})
+				continue
+			}
 			fmt.Printf("\n[LLM] Resposta final: %s\n", msg.Content)
 			break
 		}
 
-		// Execução das Tools
-		for _, call := range msg.ToolCalls {
+		// IMPORTANTE: após assistant com tool_calls, a próxima mensagem DEVE ser
+		// role=tool para cada tool_call_id. Nunca inserir user no meio.
+		truncatedTools := choice.FinishReason == "length"
+		if truncatedTools {
+			fmt.Println("[AutoCode] AVISO: tool_calls possivelmente truncadas (max_tokens). Executando o que veio e pedindo reenvio se necessário...")
+		}
+
+		for ti, call := range msg.ToolCalls {
 			fmt.Printf("[Tool] %s(%s)\n", call.Function.Name, truncate(call.Function.Arguments, 120))
 
 			if call.Function.Name == "done" {
@@ -132,6 +146,10 @@ func (o *Orchestrator) Start(req dto.Request) error {
 
 			startTool := time.Now()
 			result, err := executor.Execute(call)
+			// Argumentos truncados costumam falhar no Unmarshal JSON
+			if err != nil && truncatedTools {
+				err = fmt.Errorf("%w (resposta LLM truncada por max_tokens — reenvie write_file completo ou divida a edição)", err)
+			}
 			toolPath := ""
 			if call.Function.Name == "write_file" || call.Function.Name == "read_file" || call.Function.Name == "list_dir" {
 				var arg struct {
@@ -160,7 +178,6 @@ func (o *Orchestrator) Start(req dto.Request) error {
 				fmt.Printf("[Tool] ok (%d bytes)\n", len(result))
 			}
 
-			// 4. Limitação do tamanho do resultado para não estourar a memória/contexto
 			if len(result) > MaxToolResultBytes {
 				fmt.Printf("[Tool] AVISO: resultado da tool truncado de %d bytes para %d bytes\n", len(result), MaxToolResultBytes)
 				result = result[:MaxToolResultBytes] + "\n... [CONTEÚDO TRUNCADO DEVIDO AO TAMANHO EXCESSIVO]"
@@ -170,6 +187,17 @@ func (o *Orchestrator) Start(req dto.Request) error {
 				Role:       "tool",
 				ToolCallID: call.ID,
 				Content:    result,
+			})
+			_ = ti
+		}
+
+		// Só depois de responder TODAS as tool_calls podemos pedir continuidade
+		if truncatedTools {
+			messages = append(messages, dto.Message{
+				Role: "user",
+				Content: "Uma ou mais tool_calls anteriores foram truncadas por limite de tokens. " +
+					"Se algum write_file falhou, reenvie-o completo em partes menores (ou só o trecho necessário). " +
+					"Não repita read_file desnecessário. Continue a tarefa.",
 			})
 		}
 	}
