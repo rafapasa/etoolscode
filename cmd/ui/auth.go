@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html"
 	"log"
@@ -30,15 +31,21 @@ const (
 )
 
 type Auth struct {
-	enabled  bool
-	hash     []byte
-	plain    []byte
-	mu       sync.Mutex
-	sessions map[string]time.Time
-	fails    map[string][]time.Time
+	enabled       bool
+	setupRequired bool
+	hash          []byte
+	plain         []byte
+	mu            sync.Mutex
+	sessions      map[string]time.Time
+	fails         map[string][]time.Time
 }
 
-// NewAuthFromEnv falha (fail closed) se nenhuma senha estiver configurada.
+// SetupRequired indica que ainda não há senha (wizard de 1ª execução).
+func (a *Auth) SetupRequired() bool {
+	return a != nil && a.setupRequired
+}
+
+// NewAuthFromEnv: se não houver senha, entra em modo setup (wizard) em vez de falhar.
 func NewAuthFromEnv() (*Auth, error) {
 	a := &Auth{sessions: map[string]time.Time{}, fails: map[string][]time.Time{}}
 	if strings.EqualFold(os.Getenv("DSAC_UI_AUTH"), "off") {
@@ -50,13 +57,78 @@ func NewAuthFromEnv() (*Auth, error) {
 			return nil, fmt.Errorf("DSAC_UI_PASSWORD_HASH inválido (esperado bcrypt): %v", err)
 		}
 		a.hash = []byte(h)
-	} else if p := os.Getenv("DSAC_UI_PASSWORD"); p != "" {
-		a.plain = []byte(p)
-	} else {
-		return nil, fmt.Errorf("senha da UI não configurada: defina DSAC_UI_PASSWORD_HASH (gere com --hash-password) ou DSAC_UI_PASSWORD; ou DSAC_UI_AUTH=off para desativar")
+		a.enabled = true
+		return a, nil
 	}
-	a.enabled = true
+	if p := os.Getenv("DSAC_UI_PASSWORD"); p != "" {
+		a.plain = []byte(p)
+		a.enabled = true
+		return a, nil
+	}
+	// tenta ~/.ds-ac/auth.json (wizard)
+	if hash, plain, ok := loadAuthFile(); ok {
+		if hash != "" {
+			a.hash = []byte(hash)
+		} else if plain != "" {
+			a.plain = []byte(plain)
+		}
+		a.enabled = true
+		return a, nil
+	}
+	log.Printf("[auth] nenhuma senha configurada — modo setup (wizard de 1ª execução)")
+	a.setupRequired = true
+	a.enabled = true // middleware ativo, mas libera /setup
 	return a, nil
+}
+
+func authFilePath() string {
+	home, _ := os.UserHomeDir()
+	return home + "/.ds-ac/auth.json"
+}
+
+func loadAuthFile() (hash, plain string, ok bool) {
+	data, err := os.ReadFile(authFilePath())
+	if err != nil {
+		return "", "", false
+	}
+	var m struct {
+		PasswordHash string `json:"password_hash"`
+		Password     string `json:"password,omitempty"`
+	}
+	if json.Unmarshal(data, &m) != nil {
+		return "", "", false
+	}
+	if m.PasswordHash == "" && m.Password == "" {
+		return "", "", false
+	}
+	return m.PasswordHash, m.Password, true
+}
+
+// SavePasswordHash persiste hash em ~/.ds-ac/auth.json e ativa auth.
+func (a *Auth) SavePasswordHash(password string) error {
+	h, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	path := authFilePath()
+	if err := os.MkdirAll(path[:len(path)-len("/auth.json")], 0755); err != nil {
+		// fallback
+		_ = os.MkdirAll(os.Getenv("HOME")+"/.ds-ac", 0755)
+	}
+	// mkdir properly
+	home, _ := os.UserHomeDir()
+	_ = os.MkdirAll(home+"/.ds-ac", 0755)
+	data, _ := json.MarshalIndent(map[string]string{"password_hash": string(h)}, "", "  ")
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.hash = h
+	a.plain = nil
+	a.setupRequired = false
+	a.enabled = true
+	return nil
 }
 
 func (a *Auth) checkPassword(pw string) bool {
@@ -140,13 +212,23 @@ func isSecure(c *fiber.Ctx) bool {
 // Middleware protege todas as rotas exceto /login.
 func (a *Auth) Middleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if !a.enabled || c.Path() == "/login" {
+		path := c.Path()
+		if a.setupRequired {
+			if path == "/setup" || path == "/api/setup" || strings.HasPrefix(path, "/static") {
+				return c.Next()
+			}
+			if strings.HasPrefix(path, "/api") {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "setup required", "setup": true})
+			}
+			return c.Redirect("/setup", fiber.StatusSeeOther)
+		}
+		if !a.enabled || path == "/login" {
 			return c.Next()
 		}
 		if a.validSession(c.Cookies(sessionCookie)) {
 			return c.Next()
 		}
-		if strings.HasPrefix(c.Path(), "/api") || c.Method() != fiber.MethodGet {
+		if strings.HasPrefix(path, "/api") || c.Method() != fiber.MethodGet {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "não autenticado"})
 		}
 		return c.Redirect("/login", fiber.StatusSeeOther)

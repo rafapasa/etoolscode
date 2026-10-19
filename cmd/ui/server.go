@@ -72,8 +72,9 @@ func Start(cfg *config.Config) error {
 		AllowMethods: "GET, POST, PATCH, DELETE, OPTIONS",
 	}))
 
-	// Login/logout + proteção de TODAS as rotas registradas abaixo
+	// Login/logout + wizard de 1ª execução + proteção
 	auth.Register(app)
+	RegisterSetup(app, auth, cfg)
 	app.Use(auth.Middleware())
 
 	h := NewHandler(cfg)

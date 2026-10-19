@@ -11,6 +11,7 @@ import (
 	"github.com/rafapasa/etoolscode/internal/config"
 	"github.com/rafapasa/etoolscode/internal/core"
 	"github.com/rafapasa/etoolscode/internal/dto"
+	"github.com/rafapasa/etoolscode/internal/license"
 	"github.com/rafapasa/etoolscode/internal/service"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -29,6 +30,16 @@ func main() {
 		}
 		fmt.Print(string(h))
 		return
+	}
+
+	// Licença (fail-open): só bloqueia se servidor responder 200 + "acesso negado"
+	licenseKey := os.Getenv("ETOOLSCODE_KEY")
+	if licenseKey == "" {
+		licenseKey = cfg.ResolveAPIKey()
+	}
+	if err := license.Check(licenseKey); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
 	}
 
 	// Modo UI não exige API key: a chave só é necessária ao executar issues/chat LLM.
