@@ -100,7 +100,7 @@ export async function loadChatList(){
       </div>`;
     }).join('');
   }catch(e){
-    listEl.innerHTML=`<div class="empty-state" style="margin:16px 8px;color:#FCA5A5">${escapeHtml(e.message)}</div>`;
+    listEl.innerHTML=`<div class="empty-state" style="margin:16px 8px;color:#fca5a5">${escapeHtml(e.message)}</div>`;
   }
 }
 
@@ -158,7 +158,7 @@ export async function createNewChat(){
     const res=await fetch('/api/chat/new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:state.currentProject})});
     if(!res.ok){
       const err=await res.text();
-      if(chatMessages) chatMessages.innerHTML=`<div class="message system" style="background:#fef2f2;color:#b91c1c">Erro criar chat: ${escapeHtml(err)}</div>`;
+      if(chatMessages) chatMessages.innerHTML=`<div class="message system" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d">Erro criar chat: ${escapeHtml(err)}</div>`;
       return null;
     }
     const data=await res.json();
@@ -169,7 +169,7 @@ export async function createNewChat(){
     await loadChatList();
     return data.id;
   }catch(e){
-    if(chatMessages) chatMessages.innerHTML=`<div class="message system" style="background:#fef2f2">Erro: ${escapeHtml(e.message)}</div>`;
+    if(chatMessages) chatMessages.innerHTML=`<div class="message system" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d">Erro: ${escapeHtml(e.message)}</div>`;
     return null;
   }
 }

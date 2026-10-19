@@ -193,3 +193,7 @@ tag-v1:
 	@git tag -f v1.0.0
 	@git push origin v1.0.0 -f
 	@git log -1 --oneline
+
+.PHONY: restart-all-stack
+restart-all-stack:
+	@bash /home/opc/prj/restart-all.sh

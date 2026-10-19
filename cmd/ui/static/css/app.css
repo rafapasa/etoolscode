@@ -32,8 +32,9 @@ body {
 /* Header Navbar */
 header {
   height: 52px;
-  background-color: #ffffff; /* Fundo branco na barra de topo */
-  border-bottom: 1px solid #e8eef2;
+  background-color: var(--bg-card); /* header dark comercial */
+  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -90,7 +91,8 @@ header {
 }
 
 .select-project option {
-  background: #ffffff;
+  background: var(--bg-card);
+  color: var(--text-main);
   color: #0f172a;
   font-weight: 500;
 }
@@ -244,7 +246,7 @@ header {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #ffffff; /* Fundo branco no painel do chat */
+  background-color: var(--bg-dark);
   color: #0f172a;            /* Texto principal escuro */
 }
 
@@ -263,7 +265,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: #ffffff; /* Fundo branco na área das mensagens */
+  background-color: var(--bg-dark);
 }
 
 .empty-state {
@@ -285,7 +287,7 @@ header {
 
 .chat-input {
   flex: 1;
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid #cbd5e1;
   color: #0f172a;
   border-radius: 6px;
@@ -922,7 +924,7 @@ header {
 
 /* Issues panel - log central */
 #issuesPanel {
-  background: #ffffff;
+  background: var(--bg-card);
 }
 
 #issuesPanel .panel-head {
@@ -1404,4 +1406,217 @@ header {
 .diff-editor {
   flex: 1;
   min-height: 160px;
+}
+
+
+/* =========================================================
+   Shell comercial dark (mockup aprovado) — overrides finais
+   ========================================================= */
+header {
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+header .brand-logo {
+  /* logo permanece colorido */
+  filter: none;
+}
+.project-picker label {
+  color: var(--text-muted);
+}
+#btnWorkspace {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+#btnWorkspace:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.container {
+  background: var(--bg-dark);
+}
+
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
+}
+
+.main {
+  background: var(--bg-dark);
+}
+
+.tabs {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+.tab {
+  color: var(--text-muted);
+}
+.tab.active {
+  color: var(--green);
+}
+
+.chat-panel,
+#chatPanel,
+#issuesPanel {
+  background: var(--bg-dark) !important;
+}
+
+.chat-messages,
+#chatMessages,
+.run-log {
+  background: var(--bg-dark) !important;
+  color: var(--text-main);
+}
+
+.empty-state {
+  color: var(--text-muted) !important;
+}
+
+.chat-input-area {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-input,
+#chatInput {
+  background: var(--bg-dark) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.chat-input::placeholder,
+#chatInput::placeholder {
+  color: var(--text-muted);
+}
+
+/* bolhas de mensagem no estilo mockup */
+.msg-user,
+.message.user,
+.chat-msg.user {
+  background: #243044 !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color);
+}
+.msg-assistant,
+.message.assistant,
+.chat-msg.assistant {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color);
+}
+
+.files-panel {
+  background: var(--bg-card);
+  border-left: 1px solid var(--border-color);
+}
+.files-head,
+.files-tab {
+  color: var(--text-muted);
+}
+.files-tab.active {
+  color: var(--green);
+}
+
+.panel-head {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+/* modais */
+.modal-content {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color);
+}
+.modal-content input,
+.modal-content textarea {
+  background: var(--bg-dark) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.item-menu {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+.item-menu button {
+  color: var(--text-main);
+}
+.item-menu button:hover {
+  background: var(--bg-card-hover);
+}
+
+.chats-panel,
+.chat-list {
+  background: transparent;
+}
+
+/* select do projeto: mantém verde CTA do mockup */
+.select-project {
+  background: var(--green) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.select-project option {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+/* texto muted genérico */
+.muted {
+  color: var(--text-muted) !important;
+}
+
+/* scrollbar mais discreta */
+* {
+  scrollbar-color: var(--border-color) transparent;
+}
+
+
+/* bolhas mockup v2 */
+.message {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 8px 12px;
+  max-width: 85%;
+  line-height: 1.45;
+  border: 1px solid var(--border-color);
+}
+.message.user {
+  background: #243044 !important;
+  color: var(--text-main) !important;
+  margin-left: auto;
+}
+.message.assistant {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  margin-right: auto;
+}
+.message.system {
+  background: transparent !important;
+  border: none;
+  color: var(--text-muted) !important;
+  text-align: center;
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+.tool-line {
+  font-size: 0.78rem;
+  margin: 4px 16px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0,170,79,0.08);
+  color: var(--text-muted);
+  border-left: 3px solid var(--green);
+}
+.tool-line.tool-read { border-left-color: #3b82f6; }
+.tool-line.tool-write { border-left-color: var(--green); }
+.tool-line.tool-list { border-left-color: #a78bfa; }
+.tool-line.tool-err {
+  border-left-color: var(--danger);
+  background: rgba(239,68,68,0.08);
+  color: #fca5a5;
 }
