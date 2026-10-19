@@ -1317,3 +1317,90 @@ header {
   border: 1px solid #ef4444;
 }
 
+
+
+/* ---- Painel Fontes / Diff ---- */
+.files-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.files-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+.files-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.files-tab:hover { color: var(--text-main); }
+.files-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  font-weight: 600;
+}
+.files-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.diff-toolbar .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+.diff-file-list {
+  max-height: 28%;
+  overflow: auto;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.diff-file-row {
+  display: flex;
+  gap: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.diff-file-row:hover,
+.diff-file-row.active {
+  background: rgba(0, 170, 79, 0.12);
+  color: var(--text-main);
+}
+.diff-flag {
+  font-family: ui-monospace, monospace;
+  color: var(--green);
+  flex-shrink: 0;
+}
+.diff-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.diff-editor {
+  flex: 1;
+  min-height: 160px;
+}

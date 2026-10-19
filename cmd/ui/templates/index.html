@@ -89,8 +89,22 @@
                 </section>
 
                 <aside class="files-panel" id="filesPanel">
-                    <div class="files-head">FONTES</div>
-                    <div id="filesList" class="files-body"></div>
+                    <div class="files-tabs">
+                        <button type="button" class="files-tab active" data-files-tab="fontes">Fontes</button>
+                        <button type="button" class="files-tab" data-files-tab="diff">Diff</button>
+                    </div>
+                    <div class="files-pane" id="filesPaneFontes">
+                        <div class="files-head" id="filesHead">FONTES</div>
+                        <div id="filesList" class="files-body"></div>
+                    </div>
+                    <div class="files-pane" id="filesPaneDiff" style="display:none">
+                        <div class="diff-toolbar">
+                            <span class="muted small" id="diffBranchInfo">—</span>
+                            <button type="button" class="btn-small" id="btnDiffRefresh">Atualizar</button>
+                        </div>
+                        <div id="diffFileList" class="diff-file-list"></div>
+                        <div id="diffEditor" class="diff-editor"></div>
+                    </div>
                 </aside>
             </div>
         </main>
@@ -157,6 +171,7 @@
         </div>
     </div>
     <div id="itemMenu" class="item-menu" hidden></div>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script type="module" src="/static/js/app.js"></script>
 </body>
 

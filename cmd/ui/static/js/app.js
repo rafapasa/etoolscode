@@ -2,6 +2,7 @@ import { createNewChat, deleteChat, exportChatResumo, loadChatList, openChat, re
 import { loadExplorer, loadProjectSelector, toggleExplorer, selectIssue, openItemMenu, closeItemMenu } from './explorer.js';
 import { renderIssuesForCurrent, runIssue } from './issues.js';
 import * as modals from './modals.js';
+import { initDiffPanel, loadDiffStatus } from './diff.js';
 import { saveCurrentProject, state } from './state.js';
 
 async function init(){
@@ -13,6 +14,7 @@ async function init(){
     await openChat(state.currentChatId);
   }
   bindEvents();
+  initDiffPanel();
   switchTab(state.activeTab === 'issues' ? 'issues' : 'chat');
 }
 
@@ -34,6 +36,7 @@ function bindEvents(){
           : '<div class="empty-state">Selecione um projeto no combo para usar o chat</div>';
       }
       await renderIssuesForCurrent();
+      loadDiffStatus();
     });
   }
 
@@ -205,7 +208,7 @@ function switchTab(tab){
   if(ip) ip.style.display = tab === 'issues' ? 'flex' : 'none';
   if(explorerPane) explorerPane.style.display = tab === 'issues' ? 'block' : 'none';
   if(chatsPane) chatsPane.style.display = tab === 'chat' ? 'flex' : 'none';
-  if(filesPanel) filesPanel.classList.toggle('visible', tab === 'chat');
+  if(filesPanel) filesPanel.classList.add('visible'); // fontes + diff sempre
   if(tab === 'issues') renderIssuesForCurrent();
   if(tab === 'chat') loadChatList();
 }
