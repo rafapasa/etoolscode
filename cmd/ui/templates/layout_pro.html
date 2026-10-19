@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eToolsCode Pro</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <style>
+    body { margin:0; height:100vh; display:flex; flex-direction:column; background:#0a1120; color:#e2e8f0; font-family: system-ui,sans-serif; }
+    .pro-header { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#111c33; border-bottom:1px solid #1e2e4e; }
+    .pro-header h1 { font-size:1rem; margin:0; flex:1; }
+    .pro-header input, .pro-header select, .pro-header button {
+      background:#1c2b4a; color:#e2e8f0; border:1px solid #2c3e5a; border-radius:6px; padding:6px 10px; font-size:0.85rem;
+    }
+    .pro-header button.primary { background:#00aa4f; border:none; color:#fff; font-weight:600; cursor:pointer; }
+    .pro-header button.primary:hover { background:#008a3f; }
+    .pro-grid { flex:1; display:grid; grid-template-columns: 260px 1fr 320px; min-height:0; }
+    .pro-col { border-right:1px solid #1e2e4e; display:flex; flex-direction:column; min-height:0; }
+    .pro-col:last-child { border-right:none; }
+    .pro-col h2 { margin:0; padding:10px 12px; font-size:0.75rem; letter-spacing:0.06em; color:#8b9bb4; border-bottom:1px solid #1e2e4e; }
+    .pro-body { flex:1; overflow:auto; padding:8px; font-size:13px; }
+    #fileList .file { padding:6px 8px; border-radius:4px; cursor:pointer; color:#9fb0c7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #fileList .file:hover, #fileList .file.active { background:rgba(0,170,79,0.15); color:#f0fdf4; }
+    #diffEditor { flex:1; min-height:0; }
+    #logPane { font-family: ui-monospace, monospace; font-size:12px; color:#94a3b8; white-space:pre-wrap; }
+    .status-pill { font-size:0.75rem; color:#64748b; }
+  </style>
+</head>
+<body>
+  <header class="pro-header">
+    <h1>eToolsCode Pro</h1>
+    <input id="projectRoot" placeholder="raiz do projeto (ex: /home/opc/prj/mcp-server-openerp)" style="flex:1.2;min-width:200px">
+    <input id="branchName" placeholder="nova branch" style="width:160px">
+    <button class="primary" id="btnBranch">Criar branch</button>
+    <button id="btnRefresh">Atualizar status</button>
+    <span class="status-pill" id="branchInfo">—</span>
+  </header>
+  <div class="pro-grid">
+    <section class="pro-col">
+      <h2>ARQUIVOS MODIFICADOS</h2>
+      <div class="pro-body" id="fileList"></div>
+    </section>
+    <section class="pro-col">
+      <h2>DIFF</h2>
+      <div id="diffEditor"></div>
+    </section>
+    <section class="pro-col">
+      <h2>LOGS / AUDIT</h2>
+      <div class="pro-body" id="logPane">Carregando…</div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+  <script src="/static/js/app_pro.js"></script>
+</body>
+</html>
