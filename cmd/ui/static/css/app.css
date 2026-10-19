@@ -317,9 +317,9 @@ header {
   background: var(--green-hover);
 }
 
-/* Diff Panel Right — reservado, hoje sem fonte de dados */
+/* Diff panel: visibilidade controlada pelo JS (aba Diff). NÃO usar !important aqui. */
 .diff-panel {
-  display: none !important;
+  /* display definido inline / por #diffPanel quando a aba está ativa */
 }
 
 .files-panel {
@@ -1665,30 +1665,44 @@ header .brand-logo {
 
 /* Diff como aba central */
 #diffPanel {
+  display: none;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+#diffPanel.is-open,
+#diffPanel[style*="flex"] {
+  display: flex !important;
 }
 .diff-layout {
   display: flex;
   flex: 1;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 #diffPanel .diff-file-list {
-  width: 240px;
+  width: 260px;
   max-height: none;
   height: 100%;
   overflow: auto;
   border-bottom: none;
   border-right: 1px solid var(--border-color);
   flex-shrink: 0;
+  background: var(--bg-card);
 }
 #diffPanel .diff-editor {
   flex: 1;
   min-width: 0;
-  min-height: 0;
+  min-height: 200px;
+  height: 100%;
 }
 #diffPanel .diff-toolbar {
   flex-shrink: 0;
+  background: var(--bg-card);
 }
 
 

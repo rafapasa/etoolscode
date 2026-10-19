@@ -212,7 +212,10 @@ function switchTab(tab){
   const filesPanel = document.getElementById('filesPanel');
   if(cp) cp.style.display = tab === 'chat' ? 'flex' : 'none';
   if(ip) ip.style.display = tab === 'issues' ? 'flex' : 'none';
-  if(dp) dp.style.display = tab === 'diff' ? 'flex' : 'none';
+  if(dp) {
+    dp.style.display = tab === 'diff' ? 'flex' : 'none';
+    dp.classList.toggle('is-open', tab === 'diff');
+  }
   // sidebar: chats no chat; explorer em issues; em diff mantém explorer se houver projeto
   if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff') ? 'block' : 'none';
   if(chatsPane) chatsPane.style.display = tab === 'chat' ? 'flex' : 'none';
