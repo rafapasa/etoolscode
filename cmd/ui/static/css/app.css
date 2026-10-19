@@ -1690,3 +1690,35 @@ header .brand-logo {
 #diffPanel .diff-toolbar {
   flex-shrink: 0;
 }
+
+
+.config-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 14px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+.config-tab {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.config-tab.active {
+  color: var(--text-main);
+  border-color: var(--green);
+  background: rgba(0,170,79,0.1);
+}
+#btnConfig {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+#btnConfig:hover {
+  border-color: var(--green);
+  color: var(--green);
+}

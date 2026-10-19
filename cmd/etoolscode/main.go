@@ -12,12 +12,24 @@ import (
 	"github.com/rafapasa/etoolscode/internal/core"
 	"github.com/rafapasa/etoolscode/internal/dto"
 	"github.com/rafapasa/etoolscode/internal/service"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
 	cfg := config.NewConfig()
 	uiMode := flag.Bool("ui", false, "modo interface web")
+	hashPassword := flag.String("hash-password", "", "gera bcrypt hash da senha e sai")
 	flag.Parse()
+
+	if *hashPassword != "" {
+		h, err := bcrypt.GenerateFromPassword([]byte(*hashPassword), bcrypt.DefaultCost)
+		if err != nil {
+			fmt.Printf("erro hash: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Print(string(h))
+		return
+	}
 
 	// Modo UI não exige API key: a chave só é necessária ao executar issues/chat LLM.
 	// UI única (chat + issues + fontes + git).

@@ -46,10 +46,14 @@ type Config struct {
 	configFilePath string `json:"-"`
 }
 
-// uiPersist é o que fica em ~/.ds-ac/config.json pra compatibilidade com a UI antiga
+// uiPersist é o que fica em ~/.ds-ac/config.json (UI + runtime)
 type uiPersist struct {
 	IssuesDir      string `json:"issues_dir"`
+	LlmClient      int    `json:"llm_client,omitempty"`
 	DeepSeekApiKey string `json:"deepseek_api_key,omitempty"`
+	MetaApiKey     string `json:"meta_api_key,omitempty"`
+	GeminiApiKey   string `json:"gemini_api_key,omitempty"`
+	HttpPort       int    `json:"http_port,omitempty"`
 }
 
 func configPath() string {
@@ -87,6 +91,18 @@ func NewConfig() *Config {
 			if cfg.DeepSeekApiKey == "" && persisted.DeepSeekApiKey != "" {
 				cfg.DeepSeekApiKey = persisted.DeepSeekApiKey
 			}
+			if cfg.MetaApiKey == "" && persisted.MetaApiKey != "" {
+				cfg.MetaApiKey = persisted.MetaApiKey
+			}
+			if cfg.GeminiApiKey == "" && persisted.GeminiApiKey != "" {
+				cfg.GeminiApiKey = persisted.GeminiApiKey
+			}
+			if persisted.LlmClient != 0 && getEnv("LLM_CLIENT", "") == "" {
+				cfg.LlmClient = persisted.LlmClient
+			}
+			if persisted.HttpPort != 0 && getEnv("HTTP_PORT", "") == "" {
+				cfg.HttpPort = persisted.HttpPort
+			}
 		}
 	}
 
@@ -104,11 +120,19 @@ func (c *Config) ResolveAPIKey() string {
 			return c.MetaApiKey
 		}
 		return c.DeepSeekApiKey
+	case LLM_GEMINI:
+		if c.GeminiApiKey != "" {
+			return c.GeminiApiKey
+		}
+		return c.DeepSeekApiKey
 	default:
 		if c.DeepSeekApiKey != "" {
 			return c.DeepSeekApiKey
 		}
-		return c.MetaApiKey
+		if c.MetaApiKey != "" {
+			return c.MetaApiKey
+		}
+		return c.GeminiApiKey
 	}
 }
 
@@ -119,7 +143,11 @@ func (c *Config) Save() error {
 	}
 	persist := uiPersist{
 		IssuesDir:      c.IssuesDir,
+		LlmClient:      c.LlmClient,
 		DeepSeekApiKey: c.DeepSeekApiKey,
+		MetaApiKey:     c.MetaApiKey,
+		GeminiApiKey:   c.GeminiApiKey,
+		HttpPort:       c.HttpPort,
 	}
 	data, err := json.MarshalIndent(persist, "", "  ")
 	if err != nil {

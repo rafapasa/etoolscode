@@ -70,7 +70,17 @@ func checkJSON(path string) (bool, string) {
 }
 
 func (h *Handler) GetConfig(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"issues_dir": h.cfg.IssuesDir, "http_port": h.cfg.HttpPort, "deepseek_api_key": maskKey(h.cfg.DeepSeekApiKey), "meta_api_key": maskKey(h.cfg.MetaApiKey), "llm_client": h.cfg.LlmClient})
+	return c.JSON(fiber.Map{
+		"issues_dir":       h.cfg.IssuesDir,
+		"http_port":        h.cfg.HttpPort,
+		"llm_client":       h.cfg.LlmClient,
+		"deepseek_api_key": maskKey(h.cfg.DeepSeekApiKey),
+		"meta_api_key":     maskKey(h.cfg.MetaApiKey),
+		"gemini_api_key":   maskKey(h.cfg.GeminiApiKey),
+		"has_deepseek":     h.cfg.DeepSeekApiKey != "",
+		"has_meta":         h.cfg.MetaApiKey != "",
+		"has_gemini":       h.cfg.GeminiApiKey != "",
+	})
 }
 
 func (h *Handler) SaveConfig(c *fiber.Ctx) error {
@@ -78,6 +88,7 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 		IssuesDir      string `json:"issues_dir"`
 		DeepSeekApiKey string `json:"deepseek_api_key"`
 		MetaApiKey     string `json:"meta_api_key"`
+		GeminiApiKey   string `json:"gemini_api_key"`
 		HttpPort       int    `json:"http_port"`
 		LlmClient      int    `json:"llm_client"`
 	}
@@ -87,11 +98,15 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 	if body.IssuesDir != "" {
 		h.cfg.IssuesDir = body.IssuesDir
 	}
-	if body.DeepSeekApiKey != "" {
+	// só atualiza chave se veio valor novo (não mascara)
+	if body.DeepSeekApiKey != "" && !strings.HasPrefix(body.DeepSeekApiKey, "...") {
 		h.cfg.DeepSeekApiKey = body.DeepSeekApiKey
 	}
-	if body.MetaApiKey != "" {
+	if body.MetaApiKey != "" && !strings.HasPrefix(body.MetaApiKey, "...") {
 		h.cfg.MetaApiKey = body.MetaApiKey
+	}
+	if body.GeminiApiKey != "" && !strings.HasPrefix(body.GeminiApiKey, "...") {
+		h.cfg.GeminiApiKey = body.GeminiApiKey
 	}
 	if body.HttpPort != 0 {
 		h.cfg.HttpPort = body.HttpPort

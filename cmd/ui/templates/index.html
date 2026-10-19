@@ -21,7 +21,7 @@
             <label for="projectSelector">Projeto</label>
             <select id="projectSelector" class="select-project"></select>
         </div>
-        <button type="button" class="btn-small" id="btnWorkspace" title="Pastas e projetos">⚙ Pastas</button>
+        <button type="button" class="btn-small" id="btnConfig" title="Configurações">⚙ Config</button>
     </header>
 
     <div class="container">
@@ -151,23 +151,44 @@
         </div>
     </div>
 
-    <div class="modal" id="workspaceModal">
+    <div class="modal" id="configModal">
         <div class="modal-content edit-wide">
-            <h3>Pastas e projetos</h3>
-            <p class="muted small">Define onde ficam as issues e o código de cada projeto. Salvo em ~/.ds-ac/workspace.json</p>
-            <label class="muted small">Pasta de issues</label>
-            <input id="wsIssuesDir" placeholder="/home/opc/prj/issues" style="width:100%;margin-bottom:8px">
-            <label class="muted small">Pasta raiz de projetos (fallback)</label>
-            <input id="wsProjectsRoot" placeholder="/home/opc/prj" style="width:100%;margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <strong style="font-size:0.85rem">Projetos cadastrados</strong>
-                <button type="button" class="btn-small green" id="btnWsAddRow">+ projeto</button>
+            <h3>Configurações</h3>
+            <div class="config-tabs">
+                <button type="button" class="config-tab active" data-config-tab="pastas">Pastas</button>
+                <button type="button" class="config-tab" data-config-tab="modelos">Modelos</button>
             </div>
-            <div id="wsProjectRows" style="max-height:240px;overflow:auto;margin-bottom:10px"></div>
+            <div class="config-pane" id="configPanePastas">
+                <p class="muted small">Onde ficam as issues e o código de cada projeto (~/.ds-ac/workspace.json).</p>
+                <label class="muted small">Pasta de issues</label>
+                <input id="wsIssuesDir" placeholder="/home/opc/prj/issues" style="width:100%;margin-bottom:8px">
+                <label class="muted small">Pasta raiz de projetos (fallback)</label>
+                <input id="wsProjectsRoot" placeholder="/home/opc/prj" style="width:100%;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <strong style="font-size:0.85rem">Projetos cadastrados</strong>
+                    <button type="button" class="btn-small green" id="btnWsAddRow">+ projeto</button>
+                </div>
+                <div id="wsProjectRows" style="max-height:200px;overflow:auto;margin-bottom:10px"></div>
+            </div>
+            <div class="config-pane" id="configPaneModelos" style="display:none">
+                <p class="muted small">Provedor LLM ativo e API keys. Salvo em ~/.ds-ac/config.json (keys não são reexibidas por completo).</p>
+                <label class="muted small">Provedor ativo</label>
+                <select id="cfgLlmClient" style="width:100%;margin-bottom:10px;padding:8px;border-radius:6px;background:var(--bg-dark);color:var(--text-main);border:1px solid var(--border-color)">
+                    <option value="1">DeepSeek</option>
+                    <option value="2">Meta (Llama API)</option>
+                    <option value="3">Gemini</option>
+                </select>
+                <label class="muted small">DeepSeek API Key <span id="cfgHasDeepseek" class="muted"></span></label>
+                <input id="cfgDeepseekKey" type="password" placeholder="sk-... (deixe vazio para manter)" style="width:100%;margin-bottom:8px">
+                <label class="muted small">Meta API Key <span id="cfgHasMeta" class="muted"></span></label>
+                <input id="cfgMetaKey" type="password" placeholder="(deixe vazio para manter)" style="width:100%;margin-bottom:8px">
+                <label class="muted small">Gemini API Key <span id="cfgHasGemini" class="muted"></span></label>
+                <input id="cfgGeminiKey" type="password" placeholder="(deixe vazio para manter)" style="width:100%;margin-bottom:8px">
+            </div>
             <div id="wsAlert" class="alert"></div>
             <div class="modal-actions">
-                <button class="btn ghost" data-close="workspaceModal">Cancelar</button>
-                <button class="btn primary" id="btnWsSave">Salvar</button>
+                <button class="btn ghost" data-close="configModal">Cancelar</button>
+                <button class="btn primary" id="btnConfigSave">Salvar</button>
             </div>
         </div>
     </div>

@@ -99,7 +99,7 @@ function wsRowHTML(p){
   </div>`;
 }
 
-export async function openWorkspaceModal(){
+export async function openConfigModal(){
   const alert=document.getElementById('wsAlert');
   if(alert){ alert.className='alert'; alert.textContent=''; }
   try{
@@ -112,7 +112,25 @@ export async function openWorkspaceModal(){
   }catch(e){
     document.getElementById('wsProjectRows').innerHTML = wsRowHTML({});
   }
-  document.getElementById('workspaceModal').classList.add('open');
+  // load modelos
+  try {
+    const cfg = await apiGet('/api/config');
+    const sel = document.getElementById('cfgLlmClient');
+    if (sel) sel.value = String(cfg.llm_client || 1);
+    const mark = (id, ok) => { const el=document.getElementById(id); if(el) el.textContent = ok ? '(definida)' : '(vazia)'; };
+    mark('cfgHasDeepseek', cfg.has_deepseek);
+    mark('cfgHasMeta', cfg.has_meta);
+    mark('cfgHasGemini', cfg.has_gemini);
+    ['cfgDeepseekKey','cfgMetaKey','cfgGeminiKey'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  } catch(e) {}
+  document.querySelectorAll('[data-config-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.configTab === 'pastas');
+  });
+  const pp = document.getElementById('configPanePastas');
+  const pm = document.getElementById('configPaneModelos');
+  if (pp) pp.style.display = 'block';
+  if (pm) pm.style.display = 'none';
+  document.getElementById('configModal').classList.add('open');
 }
 
 export function addWorkspaceRow(){
@@ -120,7 +138,7 @@ export function addWorkspaceRow(){
   box.insertAdjacentHTML('beforeend', wsRowHTML({}));
 }
 
-export async function saveWorkspace(){
+export async function saveConfig(){
   const issues_dir = document.getElementById('wsIssuesDir').value.trim();
   const projects_root = document.getElementById('wsProjectsRoot').value.trim();
   const projects = [];
@@ -129,23 +147,42 @@ export async function saveWorkspace(){
     const root = row.querySelector('.ws-root').value.trim();
     if(name && root) projects.push({name, root});
   });
+  const llm_client = parseInt(document.getElementById('cfgLlmClient')?.value || '1', 10);
+  const deepseek_api_key = document.getElementById('cfgDeepseekKey')?.value.trim() || '';
+  const meta_api_key = document.getElementById('cfgMetaKey')?.value.trim() || '';
+  const gemini_api_key = document.getElementById('cfgGeminiKey')?.value.trim() || '';
   try{
-    const res = await fetch('/api/workspace', {
+    const resWs = await fetch('/api/workspace', {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({issues_dir, projects_root, projects})
     });
-    const text = await res.text();
-    if(!res.ok) throw new Error(text);
-    showAlert('wsAlert','✅ Workspace salvo', true);
+    if(!resWs.ok) throw new Error(await resWs.text());
+    const resCfg = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({llm_client, deepseek_api_key, meta_api_key, gemini_api_key, issues_dir})
+    });
+    if(!resCfg.ok) throw new Error(await resCfg.text());
+    showAlert('wsAlert','✅ Configurações salvas', true);
     setTimeout(() => {
-      document.getElementById('workspaceModal').classList.remove('open');
+      document.getElementById('configModal').classList.remove('open');
       window.dispatchEvent(new CustomEvent('projects:reload'));
       window.dispatchEvent(new CustomEvent('explorer:reload'));
     }, 500);
   }catch(e){
     showAlert('wsAlert', e.message || String(e), false);
   }
+}
+
+export function switchConfigTab(tab){
+  document.querySelectorAll('[data-config-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.configTab === tab);
+  });
+  const pp = document.getElementById('configPanePastas');
+  const pm = document.getElementById('configPaneModelos');
+  if (pp) pp.style.display = tab === 'pastas' ? 'block' : 'none';
+  if (pm) pm.style.display = tab === 'modelos' ? 'block' : 'none';
 }
 
 document.addEventListener('click', (e) => {
