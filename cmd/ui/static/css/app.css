@@ -1,13 +1,14 @@
 :root {
-  --bg-dark: #0a1120;       /* Fundo principal marinho ultra-escuro */
-  --bg-card: #111c33;       /* Painéis, Sidebar e Header em azul marinho eTools */
-  --bg-card-hover: #1c2b4a; /* Estado hover azul médio */
-  --border-color: #1e2e4e;  /* Bordas suavizadas */
-  --text-main: #f8fafc;
-  --text-muted: #8b9bb4;
-  --primary: #1d4ed8;       /* Azul de ação */
-  --primary-hover: #1e40af;
-  --green: #00aa4f;         /* Verde eTools extraído do logotipo */
+  /* Paleta comercial eToolsCode (aprovada) */
+  --bg-dark: #0f1419;       /* Fundo app slate */
+  --bg-card: #1a2332;       /* Painéis / surfaces */
+  --bg-card-hover: #243044; /* Hover */
+  --border-color: #2d3a4d;  /* Bordas / divisores */
+  --text-main: #e8eef5;
+  --text-muted: #8b9cb3;
+  --primary: #3b82f6;       /* Secundário / link */
+  --primary-hover: #2563eb;
+  --green: #00aa4f;         /* Acento marca eTools */
   --green-hover: #008a3f;
   --danger: #ef4444;
 }
@@ -32,7 +33,7 @@ body {
 header {
   height: 52px;
   background-color: #ffffff; /* Fundo branco na barra de topo */
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8eef2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -164,7 +165,7 @@ header {
 .file-item {
   padding: 6px 8px;
   font-size: 12px;
-  color: #8b9bb4;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -279,7 +280,7 @@ header {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  background: #f8fafc;       /* Rodapé do chat levemente destacado */
+  background: var(--text-main);       /* Rodapé do chat levemente destacado */
 }
 
 .chat-input {
@@ -339,7 +340,7 @@ header {
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.06em;
-  color: #8b9bb4;
+  color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -717,7 +718,7 @@ header {
 /* ==================== eTools Explorer Redesign - cores oficiais #1E3A5F e #16A34A ==================== */
 .sidebar {
   width: 300px;
-  background: linear-gradient(180deg, #0f1a2e 0%, #111c33 100%);
+  background: linear-gradient(180deg, #0f1a2e 0%, var(--bg-card) 100%);
   border-right: 1px solid rgba(30,58,95,0.4);
 }
 
@@ -925,7 +926,7 @@ header {
 }
 
 #issuesPanel .panel-head {
-  background: #f8fafc;
+  background: var(--text-main);
   border-bottom: 2px solid #e2e8f0;
   padding: 12px 16px;
   gap: 12px;
@@ -1074,7 +1075,7 @@ header {
   top: 4px;
   border-style: solid;
   border-width: 4px 0 4px 6px;
-  border-color: transparent transparent transparent #8b9bb4;
+  border-color: transparent transparent transparent var(--text-muted);
   transition: transform 0.12s ease;
   transform-origin: 2px 4px;
 }
