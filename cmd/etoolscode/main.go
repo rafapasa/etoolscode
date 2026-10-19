@@ -116,13 +116,50 @@ func merge(base, projeto, tarefa map[string]interface{}) (dto.Request, error) {
 	out.Raiz = firstNonEmpty(toString(tarefa["raiz"]), toString(projeto["raiz"]), toString(base["raiz"]))
 	out.Demanda = toString(tarefa["demanda"])
 	out.Arquivos = toStringSlice(tarefa["arquivos"])
+	// rules: base + projeto + issue (rules ou regras_gerais)
+	out.Rules = append(out.Rules, toStringSlice(base["rules"])...)
+	out.Rules = append(out.Rules, toStringSlice(projeto["rules"])...)
+	out.Rules = append(out.Rules, toStringSlice(tarefa["rules"])...)
+	out.Rules = append(out.Rules, toStringSlice(tarefa["regras_gerais"])...)
+	// estrutura: issue sobrescreve projeto
+	if tarefa["estrutura"] != nil {
+		out.Estrutura = tarefa["estrutura"]
+	} else {
+		out.Estrutura = projeto["estrutura"]
+	}
+	out.Tarefas = toTarefas(tarefa["tarefas"])
 	if out.Raiz == "" {
 		return out, fmt.Errorf("raiz ausente")
 	}
 	if out.Demanda == "" {
 		return out, fmt.Errorf("demanda ausente")
 	}
+	if len(out.Arquivos) == 0 {
+		return out, fmt.Errorf("arquivos ausentes")
+	}
+	if len(out.Tarefas) == 0 {
+		return out, fmt.Errorf("tarefas ausentes")
+	}
 	return out, nil
+}
+
+func toTarefas(v interface{}) []dto.Tarefa {
+	raw, _ := v.([]interface{})
+	var out []dto.Tarefa
+	for _, item := range raw {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		t := dto.Tarefa{
+			ID:        toString(m["id"]),
+			Arquivo:   toString(m["arquivo"]),
+			Tipo:      toString(m["tipo"]),
+			Descricao: toString(m["descricao"]),
+		}
+		out = append(out, t)
+	}
+	return out
 }
 
 func toString(v interface{}) string { s, _ := v.(string); return s }

@@ -124,16 +124,13 @@ func (r *Run) exec(ctx context.Context, cfg *config.Config, issuePath string) {
 		return
 	}
 
-	args := []string{}
-	if key := cfg.ResolveAPIKey(); key != "" {
-		args = append(args, "--key", key)
-	}
-	args = append(args, issuePath)
+	// CLI não usa flag -key: a key vai por env (NewConfig no processo filho).
+	args := []string{issuePath}
 
 	r.appendLine(fmt.Sprintf("[ui] executando %s %s", filepath.Base(binPath), issuePath))
 
 	cmd := exec.CommandContext(ctx, binPath, args...)
-	cmd.Env = os.Environ()
+	cmd.Env = buildRunEnv(cfg)
 	cmd.Dir = filepath.Dir(binPath)
 
 	stdout, err := cmd.StdoutPipe()
@@ -226,6 +223,31 @@ func (r *Run) Stop() {
 	if r.cancel != nil {
 		r.cancel()
 	}
+}
+
+// buildRunEnv propaga LLM keys e paths para o processo CLI filho.
+func buildRunEnv(cfg *config.Config) []string {
+	env := os.Environ()
+	set := func(k, v string) {
+		if v == "" {
+			return
+		}
+		env = append(env, k+"="+v)
+	}
+	set("LLM_CLIENT", fmt.Sprintf("%d", cfg.LlmClient))
+	set("DEEPSEEK_API_KEY", cfg.DeepSeekApiKey)
+	set("META_API_KEY", cfg.MetaApiKey)
+	set("GEMINI_API_KEY", cfg.GeminiApiKey)
+	set("CLAUDE_API_KEY", cfg.ClaudeApiKey)
+	set("OPENAI_API_KEY", cfg.OpenAIApiKey)
+	set("GROK_API_KEY", cfg.GrokApiKey)
+	set("ISSUES_DIR", cfg.IssuesDir)
+	if cfg.BaseJsonPath != "" {
+		set("DS_AC_BASE", cfg.BaseJsonPath)
+	} else if cfg.IssuesDir != "" {
+		set("DS_AC_BASE", filepath.Join(cfg.IssuesDir, "base.json"))
+	}
+	return env
 }
 
 func GetRun(id string) (*Run, bool) {
