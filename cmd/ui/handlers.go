@@ -501,7 +501,27 @@ func (h *Handler) CreateIssue(c *fiber.Ctx) error {
 		body.Filename += ".json"
 	}
 	targetPath := filepath.Join(projectDir, filepath.Base(body.Filename))
-	content, err := json.MarshalIndent(map[string]interface{}{"demanda": body.Demanda, "raiz": body.Raiz, "arquivos": body.Arquivos, "tarefas": body.Tarefas}, "", " ")
+	// Se o usuário colou a issue JSON inteira no campo demanda, grava o objeto real.
+	var content []byte
+	var err error
+	dem := strings.TrimSpace(body.Demanda)
+	if len(dem) > 0 && dem[0] == '{' {
+		var parsed map[string]interface{}
+		if json.Unmarshal([]byte(dem), &parsed) == nil && (parsed["demanda"] != nil || parsed["tarefas"] != nil) {
+			content, err = json.MarshalIndent(parsed, "", "  ")
+		}
+	}
+	if content == nil {
+		payload := map[string]interface{}{
+			"demanda":  body.Demanda,
+			"arquivos": body.Arquivos,
+			"tarefas":  body.Tarefas,
+		}
+		if body.Raiz != "" && body.Raiz != "." {
+			payload["raiz"] = body.Raiz
+		}
+		content, err = json.MarshalIndent(payload, "", "  ")
+	}
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}

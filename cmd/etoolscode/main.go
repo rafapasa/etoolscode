@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rafapasa/etoolscode/cmd/ui"
 	"github.com/rafapasa/etoolscode/internal/config"
@@ -112,35 +113,103 @@ func loadJSON(path string) (map[string]interface{}, error) {
 }
 
 func merge(base, projeto, tarefa map[string]interface{}) (dto.Request, error) {
+	// Se a issue foi criada pela UI colando o JSON inteiro em "demanda", desembrulha.
+	tarefa = unwrapNestedIssue(tarefa)
+
 	var out dto.Request
-	out.Raiz = firstNonEmpty(toString(tarefa["raiz"]), toString(projeto["raiz"]), toString(base["raiz"]))
+	out.Raiz = preferRaiz(toString(tarefa["raiz"]), toString(projeto["raiz"]), toString(base["raiz"]))
 	out.Demanda = toString(tarefa["demanda"])
-	out.Arquivos = toStringSlice(tarefa["arquivos"])
-	// rules: base + projeto + issue (rules ou regras_gerais)
+	out.Arquivos = filterDummy(toStringSlice(tarefa["arquivos"]))
 	out.Rules = append(out.Rules, toStringSlice(base["rules"])...)
 	out.Rules = append(out.Rules, toStringSlice(projeto["rules"])...)
 	out.Rules = append(out.Rules, toStringSlice(tarefa["rules"])...)
 	out.Rules = append(out.Rules, toStringSlice(tarefa["regras_gerais"])...)
-	// estrutura: issue sobrescreve projeto
 	if tarefa["estrutura"] != nil {
 		out.Estrutura = tarefa["estrutura"]
 	} else {
 		out.Estrutura = projeto["estrutura"]
 	}
-	out.Tarefas = toTarefas(tarefa["tarefas"])
+	out.Tarefas = filterDummyTarefas(toTarefas(tarefa["tarefas"]))
 	if out.Raiz == "" {
-		return out, fmt.Errorf("raiz ausente")
+		return out, fmt.Errorf("raiz ausente (defina em projeto.json ou na issue)")
+	}
+	if !filepath.IsAbs(out.Raiz) {
+		abs, err := filepath.Abs(out.Raiz)
+		if err == nil {
+			out.Raiz = abs
+		}
 	}
 	if out.Demanda == "" {
 		return out, fmt.Errorf("demanda ausente")
 	}
 	if len(out.Arquivos) == 0 {
-		return out, fmt.Errorf("arquivos ausentes")
+		return out, fmt.Errorf("arquivos ausentes (lista fechada obrigatória)")
 	}
 	if len(out.Tarefas) == 0 {
 		return out, fmt.Errorf("tarefas ausentes")
 	}
 	return out, nil
+}
+
+// unwrapNestedIssue: demanda pode ser um JSON stringificado da issue completa.
+func unwrapNestedIssue(tarefa map[string]interface{}) map[string]interface{} {
+	if tarefa == nil {
+		return map[string]interface{}{}
+	}
+	dem := strings.TrimSpace(toString(tarefa["demanda"]))
+	if dem == "" || dem[0] != '{' {
+		return tarefa
+	}
+	var inner map[string]interface{}
+	if err := json.Unmarshal([]byte(dem), &inner); err != nil {
+		return tarefa
+	}
+	// só unwrap se parecer issue (tem demanda string ou tarefas/arquivos)
+	if toString(inner["demanda"]) == "" && inner["tarefas"] == nil && inner["arquivos"] == nil {
+		return tarefa
+	}
+	// mescla: campos internos prevalecem; mantém outer só se inner não tiver
+	out := map[string]interface{}{}
+	for k, v := range tarefa {
+		out[k] = v
+	}
+	for k, v := range inner {
+		out[k] = v
+	}
+	return out
+}
+
+func preferRaiz(vals ...string) string {
+	for _, s := range vals {
+		s = strings.TrimSpace(s)
+		if s == "" || s == "." {
+			continue // "." da UI create é lixo
+		}
+		return s
+	}
+	return ""
+}
+
+func filterDummy(in []string) []string {
+	var out []string
+	for _, s := range in {
+		if s == "" || strings.EqualFold(s, "dummy") {
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
+}
+
+func filterDummyTarefas(in []dto.Tarefa) []dto.Tarefa {
+	var out []dto.Tarefa
+	for _, t := range in {
+		if strings.EqualFold(t.Arquivo, "dummy") || strings.EqualFold(t.Descricao, "dummy") {
+			continue
+		}
+		out = append(out, t)
+	}
+	return out
 }
 
 func toTarefas(v interface{}) []dto.Tarefa {
