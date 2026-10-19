@@ -39,6 +39,9 @@ type Config struct {
 	BaseJsonPath    string `json:"base_path"`
 	ProjetoJsonPath string `json:"projeto_path"`
 
+	// GitAutoBranch cria branch dsac/... antes de rodar issue (default true).
+	GitAutoBranch bool `json:"git_auto_branch"`
+
 	// interno
 	configFilePath string `json:"-"`
 }
@@ -66,6 +69,7 @@ func NewConfig() *Config {
 		IssuesDir:       getEnv("ISSUES_DIR", "/home/opc/prj/issues"),
 		BaseJsonPath:    getEnv("DS_AC_BASE", "/home/opc/prj/issues/base.json"),
 		ProjetoJsonPath: getEnv("DS_AC_PROJETO", ""),
+		GitAutoBranch:   getEnv("DSAC_GIT_AUTO_BRANCH", "true") != "false",
 		configFilePath:  configPath(),
 	}
 

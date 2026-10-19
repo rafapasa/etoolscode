@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rafapasa/etoolscode/internal/config"
 	"github.com/rafapasa/etoolscode/internal/core"
+	"github.com/rafapasa/etoolscode/internal/core/tools"
 	"github.com/rafapasa/etoolscode/internal/dto"
 )
 
@@ -17,16 +19,37 @@ const (
 
 type Orchestrator struct {
 	client core.LlmInterface
+	cfg    *config.Config
 }
 
 func NewOrchestrator(llm core.LlmInterface) *Orchestrator {
-	return &Orchestrator{client: llm}
+	return &Orchestrator{client: llm, cfg: config.NewConfig()}
+}
+
+func NewOrchestratorWithConfig(llm core.LlmInterface, cfg *config.Config) *Orchestrator {
+	if cfg == nil {
+		cfg = config.NewConfig()
+	}
+	return &Orchestrator{client: llm, cfg: cfg}
 }
 
 func (o *Orchestrator) Start(req dto.Request) error {
 	fmt.Println("[AutoCode] Iniciando")
 	fmt.Printf("[AutoCode] Raiz: %s\n", req.Raiz)
 	fmt.Printf("[AutoCode] Demanda: %s\n\n", req.Demanda)
+
+	if o.cfg != nil && o.cfg.GitAutoBranch {
+		issueID := req.Demanda
+		if len(issueID) > 40 {
+			issueID = issueID[:40]
+		}
+		if _, branch, err := tools.EnsureBranch(req.Raiz, issueID); err != nil {
+			fmt.Printf("[AutoCode] aviso git branch: %v\n", err)
+		} else if branch != "" {
+			fmt.Printf("[AutoCode] branch: %s\n", branch)
+			_ = NewAuditService().Log(AuditEntry{Project: req.Raiz, IssueID: branch, Tool: "git_branch", Success: true})
+		}
+	}
 
 	systemPrompt := buildSystemPrompt()
 	userPrompt := buildUserPrompt(req)
