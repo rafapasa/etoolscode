@@ -97,15 +97,25 @@
                         <span class="muted small" id="diffBranchInfo">—</span>
                         <button type="button" class="btn-small" id="btnDiffRefresh">Atualizar</button>
                     </div>
-                    <div class="diff-layout">
-                        <div id="diffFileList" class="diff-file-list"></div>
-                        <div id="diffEditor" class="diff-editor"></div>
-                    </div>
+                    <div id="diffEditor" class="diff-editor diff-editor-full"></div>
                 </section>
 
                 <aside class="files-panel" id="filesPanel">
-                    <div class="files-head" id="filesHead">FONTES</div>
-                    <div id="filesList" class="files-body"></div>
+                    <div class="files-tabs">
+                        <button type="button" class="files-tab active" id="tabFilesFontes" data-files-tab="fontes">Fontes</button>
+                        <button type="button" class="files-tab" id="tabFilesDiff" data-files-tab="alterados">Alterados</button>
+                    </div>
+                    <div class="files-pane" id="paneFontes">
+                        <div class="files-head" id="filesHead">FONTES</div>
+                        <div id="filesList" class="files-body"></div>
+                    </div>
+                    <div class="files-pane" id="paneAlterados" style="display:none">
+                        <div class="diff-toolbar compact">
+                            <span class="muted small">git status</span>
+                            <button type="button" class="btn-small" id="btnDiffRefreshSide">↻</button>
+                        </div>
+                        <div id="diffFileList" class="diff-file-list side"></div>
+                    </div>
                 </aside>
             </div>
         </main>

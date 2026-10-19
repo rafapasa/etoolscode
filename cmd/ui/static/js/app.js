@@ -15,6 +15,11 @@ async function init(){
   }
   bindEvents();
   initDiffPanel();
+  document.querySelectorAll('[data-files-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
+  });
+  const bds = document.getElementById('btnDiffRefreshSide');
+  if (bds) bds.addEventListener('click', () => loadDiffStatus());
   switchTab(state.activeTab === 'issues' ? 'issues' : 'chat');
 }
 
@@ -198,6 +203,17 @@ function bindEvents(){
   window.addEventListener('projects:reload', loadProjectSelector);
 }
 
+function switchFilesTab(which){
+  document.querySelectorAll('[data-files-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.filesTab === which);
+  });
+  const pf = document.getElementById('paneFontes');
+  const pa = document.getElementById('paneAlterados');
+  if (pf) pf.style.display = which === 'fontes' ? 'flex' : 'none';
+  if (pa) pa.style.display = which === 'alterados' ? 'flex' : 'none';
+  if (which === 'alterados') loadDiffStatus();
+}
+
 function switchTab(tab){
   state.activeTab = tab;
   localStorage.setItem('etools_active_tab', tab);
@@ -222,7 +238,12 @@ function switchTab(tab){
   if(filesPanel) filesPanel.classList.add('visible');
   if(tab === 'issues') renderIssuesForCurrent();
   if(tab === 'chat') loadChatList();
-  if(tab === 'diff') loadDiffStatus();
+  if(tab === 'diff') {
+    switchFilesTab('alterados');
+    loadDiffStatus();
+  } else if (tab === 'chat' || tab === 'issues') {
+    switchFilesTab('fontes');
+  }
 }
 
 init();
