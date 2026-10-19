@@ -10,6 +10,12 @@ func NewLlmClient(cfg config.Config) LlmInterface {
 		return NewLlamaClient(cfg.MetaApiKey)
 	case config.LLM_GEMINI:
 		return NewGeminiClient(cfg.GeminiApiKey)
+	case config.LLM_CLAUDE:
+		return NewClaudeClient(cfg)
+	case config.LLM_OPENAI:
+		return NewOpenAIClient(cfg)
+	case config.LLM_GROK:
+		return NewGrokClient(cfg)
 	default:
 		if cfg.MetaApiKey != "" {
 			return NewLlamaClient(cfg.MetaApiKey)

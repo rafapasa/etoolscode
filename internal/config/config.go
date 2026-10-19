@@ -13,6 +13,9 @@ const (
 	LLM_DEEPSEEK = 1
 	LLM_META     = 2
 	LLM_GEMINI   = 3
+	LLM_CLAUDE   = 4
+	LLM_OPENAI   = 5
+	LLM_GROK     = 6
 )
 
 type LLMProvider struct {
@@ -30,6 +33,7 @@ type Config struct {
 	GeminiApiKey   string `json:"gemini_api_key"`
 	ClaudeApiKey   string `json:"claude_api_key"`
 	OpenAIApiKey   string `json:"openai_api_key"`
+	GrokApiKey     string `json:"grok_api_key"`
 	HttpPort       int    `json:"http_port"`
 
 	LLMProviders map[string]LLMProvider `json:"llm_providers,omitempty"`
@@ -53,7 +57,11 @@ type uiPersist struct {
 	DeepSeekApiKey string `json:"deepseek_api_key,omitempty"`
 	MetaApiKey     string `json:"meta_api_key,omitempty"`
 	GeminiApiKey   string `json:"gemini_api_key,omitempty"`
-	HttpPort       int    `json:"http_port,omitempty"`
+	CloudeApiKey   string `json:"Cloude_api_key,omitempty"`
+	OpenAIApiKey   string `json:"openai_api_key,omitempty"`
+	GrokApiKey     string `json:"grok_api_key,omitempty"`
+
+	HttpPort int `json:"http_port,omitempty"`
 }
 
 func configPath() string {
@@ -69,6 +77,9 @@ func NewConfig() *Config {
 		DeepSeekApiKey:  getEnv("DEEPSEEK_API_KEY", ""),
 		MetaApiKey:      getEnv("META_API_KEY", ""),
 		GeminiApiKey:    getEnv("GEMINI_API_KEY", ""),
+		ClaudeApiKey:    getEnv("CLAUDE_API_KEY", ""),
+		OpenAIApiKey:    getEnv("OPENAI_API_KEY", ""),
+		GrokApiKey:      firstNonEmpty(getEnv("GROK_API_KEY", ""), getEnv("XAI_API_KEY", "")),
 		HttpPort:        getEnvAsInt("HTTP_PORT", 8080),
 		IssuesDir:       getEnv("ISSUES_DIR", "/home/opc/prj/issues"),
 		BaseJsonPath:    getEnv("DS_AC_BASE", "/home/opc/prj/issues/base.json"),
@@ -97,6 +108,16 @@ func NewConfig() *Config {
 			if cfg.GeminiApiKey == "" && persisted.GeminiApiKey != "" {
 				cfg.GeminiApiKey = persisted.GeminiApiKey
 			}
+			if cfg.ClaudeApiKey == "" && persisted.CloudeApiKey != "" {
+				cfg.ClaudeApiKey = persisted.CloudeApiKey
+			}
+			if cfg.OpenAIApiKey == "" && persisted.OpenAIApiKey != "" {
+				cfg.OpenAIApiKey = persisted.OpenAIApiKey
+			}
+			if cfg.GrokApiKey == "" && persisted.GrokApiKey != "" {
+				cfg.GrokApiKey = persisted.GrokApiKey
+			}
+
 			if persisted.LlmClient != 0 && getEnv("LLM_CLIENT", "") == "" {
 				cfg.LlmClient = persisted.LlmClient
 			}
@@ -125,6 +146,26 @@ func (c *Config) ResolveAPIKey() string {
 			return c.GeminiApiKey
 		}
 		return c.DeepSeekApiKey
+	case LLM_DEEPSEEK:
+		if c.DeepSeekApiKey != "" {
+			return c.DeepSeekApiKey
+		}
+		return c.MetaApiKey
+	case LLM_CLAUDE:
+		if c.ClaudeApiKey != "" {
+			return c.ClaudeApiKey
+		}
+		return c.DeepSeekApiKey
+	case LLM_OPENAI:
+		if c.OpenAIApiKey != "" {
+			return c.OpenAIApiKey
+		}
+		return c.DeepSeekApiKey
+	case LLM_GROK:
+		if c.GrokApiKey != "" {
+			return c.GrokApiKey
+		}
+		return c.DeepSeekApiKey
 	default:
 		if c.DeepSeekApiKey != "" {
 			return c.DeepSeekApiKey
@@ -147,6 +188,9 @@ func (c *Config) Save() error {
 		DeepSeekApiKey: c.DeepSeekApiKey,
 		MetaApiKey:     c.MetaApiKey,
 		GeminiApiKey:   c.GeminiApiKey,
+		CloudeApiKey:   c.ClaudeApiKey,
+		OpenAIApiKey:   c.OpenAIApiKey,
+		GrokApiKey:     c.GrokApiKey,
 		HttpPort:       c.HttpPort,
 	}
 	data, err := json.MarshalIndent(persist, "", "  ")
@@ -170,4 +214,13 @@ func getEnvAsInt(key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
+}
+
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

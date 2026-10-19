@@ -77,9 +77,11 @@ func (h *Handler) GetConfig(c *fiber.Ctx) error {
 		"deepseek_api_key": maskKey(h.cfg.DeepSeekApiKey),
 		"meta_api_key":     maskKey(h.cfg.MetaApiKey),
 		"gemini_api_key":   maskKey(h.cfg.GeminiApiKey),
+		"grok_api_key":     maskKey(h.cfg.GrokApiKey),
 		"has_deepseek":     h.cfg.DeepSeekApiKey != "",
 		"has_meta":         h.cfg.MetaApiKey != "",
 		"has_gemini":       h.cfg.GeminiApiKey != "",
+		"has_grok":         h.cfg.GrokApiKey != "",
 	})
 }
 
@@ -89,6 +91,7 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 		DeepSeekApiKey string `json:"deepseek_api_key"`
 		MetaApiKey     string `json:"meta_api_key"`
 		GeminiApiKey   string `json:"gemini_api_key"`
+		GrokApiKey     string `json:"grok_api_key"`
 		HttpPort       int    `json:"http_port"`
 		LlmClient      int    `json:"llm_client"`
 	}
@@ -107,6 +110,9 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 	}
 	if body.GeminiApiKey != "" && !strings.HasPrefix(body.GeminiApiKey, "...") {
 		h.cfg.GeminiApiKey = body.GeminiApiKey
+	}
+	if body.GrokApiKey != "" && !strings.HasPrefix(body.GrokApiKey, "...") {
+		h.cfg.GrokApiKey = body.GrokApiKey
 	}
 	if body.HttpPort != 0 {
 		h.cfg.HttpPort = body.HttpPort

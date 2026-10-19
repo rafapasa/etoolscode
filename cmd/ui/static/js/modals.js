@@ -121,7 +121,8 @@ export async function openConfigModal(){
     mark('cfgHasDeepseek', cfg.has_deepseek);
     mark('cfgHasMeta', cfg.has_meta);
     mark('cfgHasGemini', cfg.has_gemini);
-    ['cfgDeepseekKey','cfgMetaKey','cfgGeminiKey'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    mark('cfgHasGrok', cfg.has_grok);
+    ['cfgDeepseekKey','cfgMetaKey','cfgGeminiKey','cfgGrokKey'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   } catch(e) {}
   document.querySelectorAll('[data-config-tab]').forEach(b => {
     b.classList.toggle('active', b.dataset.configTab === 'pastas');
@@ -151,6 +152,7 @@ export async function saveConfig(){
   const deepseek_api_key = document.getElementById('cfgDeepseekKey')?.value.trim() || '';
   const meta_api_key = document.getElementById('cfgMetaKey')?.value.trim() || '';
   const gemini_api_key = document.getElementById('cfgGeminiKey')?.value.trim() || '';
+  const grok_api_key = document.getElementById('cfgGrokKey')?.value.trim() || '';
   try{
     const resWs = await fetch('/api/workspace', {
       method: 'PUT',
@@ -161,7 +163,7 @@ export async function saveConfig(){
     const resCfg = await fetch('/api/config', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({llm_client, deepseek_api_key, meta_api_key, gemini_api_key, issues_dir})
+      body: JSON.stringify({llm_client, deepseek_api_key, meta_api_key, gemini_api_key, grok_api_key, issues_dir})
     });
     if(!resCfg.ok) throw new Error(await resCfg.text());
     showAlert('wsAlert','✅ Configurações salvas', true);

@@ -46,6 +46,8 @@ func RegisterSetup(app *fiber.App, auth *Auth, cfg *config.Config) {
 			cfg.MetaApiKey = body.APIKey
 		case config.LLM_GEMINI:
 			cfg.GeminiApiKey = body.APIKey
+		case config.LLM_GROK:
+			cfg.GrokApiKey = body.APIKey
 		default:
 			cfg.DeepSeekApiKey = body.APIKey
 		}
@@ -108,6 +110,7 @@ func sendSetupPage(c *fiber.Ctx, msg string) error {
     <option value="1">DeepSeek</option>
     <option value="2">Meta (Llama API)</option>
     <option value="3">Gemini</option>
+    <option value="6">Grok (xAI)</option>
   </select>
   <label>API Key</label>
   <input id="apikey" type="password" placeholder="sk-...">
