@@ -205,6 +205,15 @@
             </div>
         </div>
     </div>
+    <!-- Log de atividades (chat + issues) -->
+    <div id="activityLog" class="activity-log is-open">
+        <div class="activity-log-bar">
+            <button type="button" id="btnActivityLogToggle" class="btn-small act-toggle">▾ Log</button>
+            <span class="muted small">leituras · escritas · comandos · erros</span>
+            <button type="button" id="btnActivityLogClear" class="btn-small" title="Limpar">Limpar</button>
+        </div>
+        <div id="activityLogBody" class="activity-log-body"></div>
+    </div>
     <div id="itemMenu" class="item-menu" hidden></div>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script type="module" src="/static/js/app.js"></script>

@@ -247,14 +247,22 @@ func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 	var args map[string]interface{}
 	_ = json.Unmarshal([]byte(argsJSON), &args)
 	if args != nil {
-		if v, ok := args["path"].(string); ok {
+		if v, ok := args["path"].(string); ok && strings.TrimSpace(v) != "" {
 			path = v
-		} else if v, ok := args["dir"].(string); ok {
+		} else if v, ok := args["dir"].(string); ok && strings.TrimSpace(v) != "" {
+			path = v
+		} else if v, ok := args["command"].(string); ok && strings.TrimSpace(v) != "" {
+			path = v
+		} else if v, ok := args["name"].(string); ok && strings.TrimSpace(v) != "" {
+			// git_branch name
 			path = v
 		}
 	}
 	if path == "" && (name == "list_files" || name == "list_dir") {
 		path = "."
+	}
+	if path == "" && name == "git_status" {
+		path = "git status"
 	}
 
 	kind := "read"
@@ -278,7 +286,10 @@ func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 		}
 	case "write_file":
 		if result.Success {
-			detail = fmt.Sprintf("%d bytes escritos", len(result.Content))
+			detail = result.Content
+			if detail == "" {
+				detail = "ok"
+			}
 		} else {
 			detail = result.Error
 		}
@@ -340,6 +351,25 @@ func toolEvent(name, argsJSON string, result chat.ToolResult) fiber.Map {
 		detail = "ok"
 	}
 
+	if path == "" && result.Content != "" {
+		// fallback: primeira linha útil do resultado
+		for _, line := range strings.Split(result.Content, "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" && !strings.HasPrefix(line, "ERRO") {
+				path = line
+				if len(path) > 120 {
+					path = path[:120] + "…"
+				}
+				break
+			}
+		}
+	}
+	if path == "" {
+		path = name
+	}
+	if detail == "" && !result.Success {
+		detail = result.Error
+	}
 	return fiber.Map{
 		"type":   "tool",
 		"name":   name,

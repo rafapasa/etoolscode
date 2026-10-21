@@ -1,3 +1,4 @@
+import { pushActivity } from './activitylog.js';
 import { saveCurrentChat, state } from './state.js';
 
 function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -33,33 +34,31 @@ export function addMessage(role, content, returnEl=false, forceScroll=false){
 
 function toolKind(name){
   if(name==='list_files' || name==='list_dir') return 'list';
-  if(name==='write_file' || name==='apply_patch') return 'write';
+  if(name==='write_file' || name==='search_replace' || name==='apply_patch') return 'write';
+  if(name==='run_command') return 'command';
+  if(name && name.startsWith('git_')) return 'git';
   return 'read';
 }
 
-function toolVerb(kind, ok){
-  if(!ok) return 'falhou';
-  if(kind==='list') return 'Listou';
-  if(kind==='write') return 'Gravou';
-  return 'Leu';
+/** Tools vão para o painel de log (não poluem o chat). */
+function addToolLine(data){
+  const kind = data.kind || toolKind(data.name || '');
+  const ok = data.ok !== false;
+  let path = (data.path || '').trim();
+  let detail = (data.detail || data.error || '').trim();
+  if (!path && detail) path = detail.split('\n')[0];
+  if (!path) path = data.name || '(tool)';
+  pushActivity({
+    kind,
+    ok,
+    name: data.name || '',
+    path,
+    detail: detail && detail !== path ? detail : (data.error || ''),
+    error: data.error || '',
+    source: 'chat',
+  });
 }
 
-function addToolLine(data){
-  const c=document.getElementById('chatMessages');
-  if(!c) return;
-  const e=c.querySelector('.empty-state'); if(e) e.remove();
-  const kind=data.kind || toolKind(data.name||'');
-  const ok=data.ok !== false;
-  const path=data.path || '.';
-  const div=document.createElement('div');
-  div.className='tool-line tool-'+kind+(ok?'':' tool-err');
-  const verb=toolVerb(kind, ok);
-  const extra=(!ok && data.error) ? `<span class="tool-err-msg">${escapeHtml(data.error)}</span>` : '';
-  div.innerHTML=`<span class="tool-verb">${verb}</span><span class="tool-path">${escapeHtml(path)}</span>${extra}`;
-  const pinned = nearBottom(c);
-  c.appendChild(div);
-  stickScroll(c, pinned);
-}
 
 function formatWhen(iso){
   if(!iso) return '';
@@ -136,7 +135,13 @@ function renderSession(session){
   for(const m of msgs){
     if(m.role==='system') continue;
     if(m.role==='tool'){
-      addToolLine({name:m.name||'read_file', path:'', ok:!(m.content||'').startsWith('ERRO:')});
+      const content = m.content || '';
+      const ok = !content.startsWith('ERRO:') && !content.startsWith('erro');
+      // tenta extrair path do conteúdo tipico: "Arquivo escrito: path" / "arquivo escrito: path"
+      let path = '';
+      const mPath = content.match(/(?:arquivo|Arquivo|search_replace ok:|lido|path)[:\s]+([^\s(]+)/i);
+      if (mPath) path = mPath[1];
+      addToolLine({name:m.name||'read_file', path: path || (ok ? '(histórico)' : content.slice(0,120)), detail: content.slice(0,200), ok});
       continue;
     }
     if(m.role==='assistant' && !m.content && m.tool_calls) continue;

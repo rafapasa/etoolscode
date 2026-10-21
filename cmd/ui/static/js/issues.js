@@ -1,3 +1,4 @@
+import { pushIssueLine } from './activitylog.js';
 import { state } from './state.js';
 
 let activePump = 0;
@@ -37,6 +38,7 @@ export async function renderIssuesForCurrent(){
 }
 
 function appendLogLine(container, text){
+  try { pushIssueLine(text); } catch(_){}
   const line = document.createElement('div');
   line.className = 'log-line';
   const t = String(text ?? '');

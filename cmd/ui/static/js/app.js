@@ -3,6 +3,7 @@ import { loadExplorer, loadProjectSelector, toggleExplorer, selectIssue, openIte
 import { renderIssuesForCurrent, runIssue } from './issues.js';
 import * as modals from './modals.js';
 import { initDiffPanel, loadDiffStatus } from './diff.js';
+import { initActivityLog } from './activitylog.js';
 import { saveCurrentProject, state } from './state.js';
 
 async function init(){
@@ -15,6 +16,7 @@ async function init(){
   }
   bindEvents();
   initDiffPanel();
+  initActivityLog();
   document.querySelectorAll('[data-files-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
   });
