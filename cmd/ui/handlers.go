@@ -135,29 +135,42 @@ func maskKey(k string) string {
 
 // CONCLUIDAS IGNORADA TOTALMENTE
 func (h *Handler) ListIssues(c *fiber.Ctx) error {
-	if h.cfg.IssuesDir == "" {
-		return c.JSON(fiber.Map{"projects": []ProjectInfo{}, "base_exists": false})
+	// Explorer e combo: projetos do workspace (Config). Pastas órfãs em issues_dir não entram.
+	w := config.LoadWorkspace()
+	issuesRoot := h.cfg.IssuesDir
+	if w.IssuesDir != "" {
+		issuesRoot = w.IssuesDir
 	}
-	entries, err := os.ReadDir(h.cfg.IssuesDir)
-	if err != nil {
-		return c.Status(500).SendString(err.Error())
+	baseExists := false
+	if issuesRoot != "" {
+		baseExists = fileExists(filepath.Join(issuesRoot, "base.json"))
 	}
 	var projects []ProjectInfo
-	baseExists := false
-	for _, e := range entries {
-		if !e.IsDir() {
-			if e.Name() == "base.json" {
-				baseExists = true
-			}
+	for _, p := range w.Projects {
+		name := strings.TrimSpace(p.Name)
+		if name == "" {
 			continue
 		}
-		if strings.EqualFold(e.Name(), "concluidas") {
-			continue
-		}
-		dir := filepath.Join(h.cfg.IssuesDir, e.Name())
+		dir := filepath.Join(issuesRoot, name)
+		// se a pasta ainda não existe, lista vazia (será criada no upsert/save)
 		issues := listIssues(dir)
 		projetoExists := fileExists(filepath.Join(dir, "projeto.json"))
-		projects = append(projects, ProjectInfo{Name: e.Name(), Issues: issues, ProjetoExists: projetoExists})
+		projects = append(projects, ProjectInfo{Name: name, Issues: issues, ProjetoExists: projetoExists})
+	}
+	// Fallback: workspace vazio → comportamento antigo (scan issues_dir)
+	if len(projects) == 0 && issuesRoot != "" {
+		if entries, err := os.ReadDir(issuesRoot); err == nil {
+			for _, e := range entries {
+				if !e.IsDir() || strings.EqualFold(e.Name(), "concluidas") {
+					continue
+				}
+				dir := filepath.Join(issuesRoot, e.Name())
+				projects = append(projects, ProjectInfo{
+					Name: e.Name(), Issues: listIssues(dir),
+					ProjetoExists: fileExists(filepath.Join(dir, "projeto.json")),
+				})
+			}
+		}
 	}
 	sort.Slice(projects, func(i, j int) bool { return projects[i].Name < projects[j].Name })
 	return c.JSON(fiber.Map{"projects": projects, "base_exists": baseExists})
@@ -237,26 +250,25 @@ func walkSrc(absRoot, dir string, depth, count int) ([]srcNode, int) {
 }
 
 func (h *Handler) ListProjects(c *fiber.Ctx) error {
-	set := map[string]struct{}{}
-	// pastas em IssuesDir
-	if h.cfg.IssuesDir != "" {
+	// Fonte principal: projetos cadastrados em Config → Pastas (workspace.json).
+	w := config.LoadWorkspace()
+	var out []string
+	for _, p := range w.Projects {
+		name := strings.TrimSpace(p.Name)
+		if name == "" {
+			continue
+		}
+		out = append(out, name)
+	}
+	// Fallback só se nenhum projeto cadastrado: pastas antigas em issues_dir.
+	if len(out) == 0 && h.cfg.IssuesDir != "" {
 		if entries, err := os.ReadDir(h.cfg.IssuesDir); err == nil {
 			for _, e := range entries {
 				if e.IsDir() && !strings.EqualFold(e.Name(), "concluidas") {
-					set[e.Name()] = struct{}{}
+					out = append(out, e.Name())
 				}
 			}
 		}
-	}
-	// projetos cadastrados no workspace
-	for _, p := range config.LoadWorkspace().Projects {
-		if p.Name != "" {
-			set[p.Name] = struct{}{}
-		}
-	}
-	var out []string
-	for n := range set {
-		out = append(out, n)
 	}
 	sort.Strings(out)
 	return c.JSON(out)

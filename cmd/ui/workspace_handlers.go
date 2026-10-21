@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,6 +18,20 @@ func (h *Handler) GetWorkspace(c *fiber.Ctx) error {
 	return c.JSON(w)
 }
 
+// ensureProjectIssuesDir cria issues_dir/<nome> se ainda não existir.
+func ensureProjectIssuesDir(issuesDir, name string) error {
+	name = strings.TrimSpace(name)
+	if issuesDir == "" || name == "" {
+		return nil
+	}
+	// evita path traversal no nome
+	name = filepath.Base(name)
+	if name == "." || name == ".." {
+		return nil
+	}
+	return os.MkdirAll(filepath.Join(issuesDir, name), 0755)
+}
+
 // SaveWorkspace PUT /api/workspace — issues_dir + projects_root + lista
 func (h *Handler) SaveWorkspace(c *fiber.Ctx) error {
 	var body config.Workspace
@@ -30,13 +45,21 @@ func (h *Handler) SaveWorkspace(c *fiber.Ctx) error {
 	for i := range body.Projects {
 		body.Projects[i].Name = strings.TrimSpace(body.Projects[i].Name)
 		body.Projects[i].Root = strings.TrimSpace(body.Projects[i].Root)
+		body.Projects[i].IssuesDir = strings.TrimSpace(body.Projects[i].IssuesDir)
 	}
 	if err := config.SaveWorkspace(body); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	if body.IssuesDir != "" {
 		h.cfg.IssuesDir = body.IssuesDir
-		_ = h.cfg.Save()
+	}
+	issuesRoot := h.cfg.IssuesDir
+	if body.IssuesDir != "" {
+		issuesRoot = body.IssuesDir
+	}
+	// garante pasta de issues por projeto cadastrado
+	for _, p := range body.Projects {
+		_ = ensureProjectIssuesDir(issuesRoot, p.Name)
 	}
 	return c.JSON(fiber.Map{"ok": true, "workspace": body})
 }
@@ -69,6 +92,14 @@ func (h *Handler) UpsertProject(c *fiber.Ctx) error {
 	}
 	if err := config.SaveWorkspace(w); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	// pasta de issues do projeto
+	issuesRoot := w.IssuesDir
+	if issuesRoot == "" {
+		issuesRoot = h.cfg.IssuesDir
+	}
+	if err := ensureProjectIssuesDir(issuesRoot, body.Name); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "projeto salvo, mas falha ao criar pasta de issues: " + err.Error()})
 	}
 	return c.JSON(fiber.Map{"ok": true, "project": body})
 }
