@@ -21,7 +21,8 @@
             <label for="projectSelector">Projeto</label>
             <select id="projectSelector" class="select-project"></select>
         </div>
-        <button type="button" class="btn-small" id="btnConfig" title="Configurações">⚙ Config</button>
+        <button type="button" id="btnEngineering" class="btn-small" title="Assistente de Engenharia">Engenharia</button>
+            <button type="button" class="btn-small" id="btnConfig" title="Configurações">⚙ Config</button>
     </header>
 
     <div class="container">
@@ -249,6 +250,52 @@
         </div>
         <div id="activityLogBody" class="activity-log-body"></div>
     </div>
+
+    <div class="modal" id="engineeringModal">
+        <div class="modal-content create-wide">
+            <h3>Assistente de Engenharia</h3>
+            <p class="muted small create-hint">Escolha o estilo, descreva a feature, revise o plano e gere o scaffold TDD (interfaces + testes + stub).</p>
+            <div class="create-grid">
+                <label class="create-label">Projeto
+                    <input id="engProject" placeholder="nome no Config">
+                </label>
+                <label class="create-label">Estilo
+                    <select id="engStyle"></select>
+                </label>
+                <label class="create-label">Branch (opcional)
+                    <input id="engBranch" placeholder="dev-123">
+                </label>
+            </div>
+            <div class="create-grid">
+                <label class="create-label">Feature
+                    <input id="engFeature" placeholder="PricingService">
+                </label>
+                <label class="create-label">Package path
+                    <input id="engPackage" placeholder="internal/service (vazio = default do estilo)">
+                </label>
+                <label class="create-label">Nome da issue (se criar)
+                    <input id="engIssueName" placeholder="tdd-pricing.json">
+                </label>
+            </div>
+            <label class="create-label">Descrição da feature
+                <textarea id="engDescription" class="create-demanda" placeholder="O que deve fazer, restrições, entradas/saídas esperadas"></textarea>
+            </label>
+            <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap">
+                <label class="muted small"><input type="checkbox" id="engSkipExisting" checked> Não sobrescrever arquivos existentes</label>
+                <label class="muted small"><input type="checkbox" id="engCreateIssue"> Criar issue TDD na pasta de issues</label>
+            </div>
+            <label class="create-label">Plano / resultado
+                <pre id="engPlanPreview" class="eng-preview">Gere o plano para revisar aqui.</pre>
+            </label>
+            <div id="engAlert" class="alert"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn ghost" data-close="engineeringModal">Fechar</button>
+                <button type="button" class="btn primary" id="btnEngPlan">1. Gerar plano</button>
+                <button type="button" class="btn primary" id="btnEngScaffold">2. Scaffold TDD</button>
+            </div>
+        </div>
+    </div>
+
     <div id="itemMenu" class="item-menu" hidden></div>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script type="module" src="/static/js/app.js"></script>

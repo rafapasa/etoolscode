@@ -5,6 +5,7 @@ import * as modals from './modals.js';
 import { initDiffPanel, loadDiffStatus } from './diff.js';
 import { initFontePanel } from './source.js';
 import { initActivityLog } from './activitylog.js';
+import { initEngineering } from './engineering.js';
 import { saveCurrentProject, state } from './state.js';
 
 async function init(){
@@ -19,6 +20,7 @@ async function init(){
   initDiffPanel();
   initFontePanel();
   initActivityLog();
+  initEngineering();
   document.querySelectorAll('[data-files-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
   });
