@@ -283,14 +283,17 @@
             <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap">
                 <label class="muted small"><input type="checkbox" id="engSkipExisting" checked> Não sobrescrever arquivos existentes</label>
                 <label class="muted small"><input type="checkbox" id="engCreateIssue"> Criar issue TDD na pasta de issues</label>
+                <label class="muted small"><input type="checkbox" id="engEnrichLLM"> Enriquecer métodos com LLM</label>
             </div>
             <label class="create-label">Plano / resultado
                 <pre id="engPlanPreview" class="eng-preview">Gere o plano para revisar aqui.</pre>
             </label>
             <div id="engAlert" class="alert"></div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
                 <button type="button" class="btn ghost" data-close="engineeringModal">Fechar</button>
+                <button type="button" class="btn-small" id="btnEngDetect">Detectar estilo</button>
                 <button type="button" class="btn primary" id="btnEngPlan">1. Gerar plano</button>
+                <button type="button" class="btn-small" id="btnEngPreview">Preview arquivos</button>
                 <button type="button" class="btn primary" id="btnEngScaffold">2. Scaffold TDD</button>
             </div>
         </div>

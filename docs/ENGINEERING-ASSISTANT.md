@@ -2,10 +2,12 @@
 
 Fluxo multilevel:
 
-1. **Brief** — estilo arquitetural + feature + descrição
-2. **Plano** — pastas, interfaces, testes (revisável)
-3. **Scaffold TDD** — grava interface + testes vermelhos + stub TODO
-4. **Implementação** — humana e/ou issue/chat até `go test` passar
+1. **Detectar estilo** (opcional) — inspeciona `internal/` do projeto
+2. **Brief** — estilo + feature + descrição
+3. **Plano** — pastas, interfaces, métodos (template; opcional enriquecimento LLM)
+4. **Preview** — mostra arquivos sem gravar
+5. **Scaffold TDD** — grava interface + testes vermelhos + stub TODO (+ issue opcional)
+6. **Implementação** — humana e/ou issue/chat até `go test` passar
 
 ## Estilos
 
@@ -19,9 +21,11 @@ Fluxo multilevel:
 ## API
 
 - `GET /api/engineering/styles`
-- `POST /api/engineering/plan` body: Brief → Plan
+- `GET /api/engineering/detect?project=`
+- `POST /api/engineering/plan` body: Brief + `enrich_llm`
+- `POST /api/engineering/preview` body: `{ "plan" }`
 - `POST /api/engineering/scaffold` body: `{ "project", "plan", "skip_existing", "create_issue" }`
 
-## Observação
+## UI
 
-O serviço em produção **não** é reiniciado automaticamente neste branch; use o binário/dev quando for validar a UI.
+Botão **Engenharia** no header da interface web.
