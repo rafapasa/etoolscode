@@ -197,3 +197,22 @@ tag-v1:
 .PHONY: restart-all-stack
 restart-all-stack:
 	@bash /home/opc/prj/restart-all.sh
+
+
+# ------------------------------------------------------------
+# Branch helpers (não reinicia serviço)
+# ------------------------------------------------------------
+.PHONY: git-commit-push
+git-commit-push:
+	@git add -A
+	@git -c user.name="Rafael Alberto Pasa" -c user.email="rafapasa@gmail.com" commit -m "$(MSG)" || true
+	@git push -u origin HEAD
+	@git log -1 --oneline
+	@git status -sb
+
+.PHONY: git-branch-dev
+git-branch-dev:
+	@git checkout -B dev
+	@git push -u origin dev
+	@git status -sb
+	@git log -1 --oneline

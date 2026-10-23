@@ -68,13 +68,39 @@ export async function submitCreate(){
   const project=document.getElementById('crProject').value.trim();
   const filename=document.getElementById('crFilename').value.trim();
   const demanda=document.getElementById('crDemanda').value.trim();
-  if(!project||!filename||!demanda){ showAlert('crAlert','Preencha'); return; }
+  const branch=(document.getElementById('crBranch')||{}).value?.trim() || '';
+  if(!project||!filename||!demanda){ showAlert('crAlert','Preencha projeto, arquivo e demanda'); return; }
+
+  const lines = (el) => (el?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+  const arquivos = lines(document.getElementById('crArquivos'));
+  const rules = lines(document.getElementById('crRules'));
+  const tarefas = [];
+  for(const line of lines(document.getElementById('crTarefas'))){
+    // formato: arquivo | tipo | descrição
+    const parts = line.split('|').map(s => s.trim());
+    if(parts.length >= 3){
+      tarefas.push({ id: String(tarefas.length+1), arquivo: parts[0], tipo: parts[1] || 'edit', descricao: parts.slice(2).join('|').trim() });
+    } else if(parts.length === 2){
+      tarefas.push({ id: String(tarefas.length+1), arquivo: parts[0], tipo: 'edit', descricao: parts[1] });
+    } else if(arquivos[0]){
+      tarefas.push({ id: String(tarefas.length+1), arquivo: arquivos[0], tipo: 'edit', descricao: line });
+    }
+  }
+  // se só tem arquivos sem tarefas, cria tarefa placeholder por arquivo
+  if(!tarefas.length && arquivos.length){
+    arquivos.forEach((a, idx) => tarefas.push({ id: String(idx+1), arquivo: a, tipo: 'edit', descricao: demanda }));
+  }
+
   try{
-    await apiPost('/api/issues/create',{project,filename,demanda,raiz:'.',arquivos:['dummy'],tarefas:[{id:'1',arquivo:'dummy',tipo:'edit',descricao:'dummy'}]});
+    await apiPost('/api/issues/create',{
+      project, filename, demanda, branch,
+      arquivos, rules, tarefas
+    });
     showAlert('crAlert','Criada',true);
     setTimeout(()=>{ closeCreateModal(); window.dispatchEvent(new CustomEvent('explorer:reload')); window.dispatchEvent(new CustomEvent('projects:reload')); },600);
-  }catch(e){ showAlert('crAlert', e.message); }
+  }catch(e){ showAlert('crAlert', e.message||String(e)); }
 }
+
 
 export function openUploadModal(){ document.getElementById('upProject').value=state.currentProject||''; document.getElementById('uploadModal').classList.add('open'); }
 export function closeUploadModal(){ document.getElementById('uploadModal').classList.remove('open'); }

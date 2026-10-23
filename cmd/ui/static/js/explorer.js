@@ -1,5 +1,6 @@
 import { apiGet } from './api.js';
 import { saveExpanded, state } from './state.js';
+import { openSourceFile } from './source.js';
 
 export async function loadProjectSelector(){
   try{
@@ -137,6 +138,16 @@ function buildSrcNode(node, depth){
       row.querySelector('.src-ico').textContent = open ? '▾' : '▸';
     });
     frag.appendChild(kids);
+  } else if(!node.dir){
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const path = node.path || node.name;
+      if(state.currentProject && path){
+        document.querySelectorAll('.src-row.src-file.active').forEach(el => el.classList.remove('active'));
+        row.classList.add('active');
+        openSourceFile(state.currentProject, path);
+      }
+    });
   }
   const box = document.createElement('div');
   box.className = 'src-node';

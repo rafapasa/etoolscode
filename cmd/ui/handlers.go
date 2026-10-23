@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -181,6 +182,51 @@ type srcNode struct {
 	Path     string    `json:"path"`
 	Dir      bool      `json:"dir"`
 	Children []srcNode `json:"children,omitempty"`
+}
+
+
+// GetSourceFile GET /api/source/:project/* — lê arquivo do código-fonte do projeto (não issue).
+func (h *Handler) GetSourceFile(c *fiber.Ctx) error {
+	project := c.Params("project")
+	rel := strings.TrimPrefix(c.Params("*"), "/")
+	if project == "" || rel == "" || strings.Contains(rel, "..") {
+		return c.Status(400).SendString("projeto/arquivo inválido")
+	}
+	root := h.cfg.ResolveProjectRoot(project)
+	if root == "" {
+		return c.Status(404).SendString("raiz do projeto não encontrada")
+	}
+	full := filepath.Join(root, filepath.FromSlash(rel))
+	// confina sob root
+	absRoot, _ := filepath.Abs(root)
+	absFull, err := filepath.Abs(full)
+	if err != nil || !strings.HasPrefix(absFull, absRoot) {
+		return c.Status(403).SendString("caminho fora do projeto")
+	}
+	info, err := os.Stat(absFull)
+	if err != nil || info.IsDir() {
+		return c.Status(404).SendString("arquivo não encontrado")
+	}
+	if info.Size() > 2*1024*1024 {
+		return c.Status(413).SendString("arquivo muito grande (>2MB)")
+	}
+	data, err := os.ReadFile(absFull)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	// binário simples
+	for _, b := range data {
+		if b == 0 {
+			return c.Status(415).SendString("arquivo binário não suportado")
+		}
+	}
+	return c.JSON(fiber.Map{
+		"project": project,
+		"path":    rel,
+		"root":    root,
+		"content": string(data),
+		"bytes":   len(data),
+	})
 }
 
 func (h *Handler) ProjectTree(c *fiber.Ctx) error {
@@ -493,7 +539,9 @@ func (h *Handler) CreateIssue(c *fiber.Ctx) error {
 		Project  string   `json:"project"`
 		Filename string   `json:"filename"`
 		Demanda  string   `json:"demanda"`
+		Branch   string   `json:"branch"`
 		Raiz     string   `json:"raiz"`
+		Rules    []string `json:"rules"`
 		Arquivos []string `json:"arquivos"`
 		Tarefas  []struct {
 			Id        string `json:"id"`
@@ -524,10 +572,48 @@ func (h *Handler) CreateIssue(c *fiber.Ctx) error {
 		}
 	}
 	if content == nil {
+		// limpa dummies
+		var arquivos []string
+		for _, a := range body.Arquivos {
+			a = strings.TrimSpace(a)
+			if a == "" || strings.EqualFold(a, "dummy") {
+				continue
+			}
+			arquivos = append(arquivos, a)
+		}
+		var tarefas []map[string]string
+		for i, t := range body.Tarefas {
+			arq := strings.TrimSpace(t.Arquivo)
+			desc := strings.TrimSpace(t.Descricao)
+			if arq == "" || strings.EqualFold(arq, "dummy") || strings.EqualFold(desc, "dummy") {
+				continue
+			}
+			id := t.Id
+			if id == "" {
+				id = fmt.Sprintf("%d", i+1)
+			}
+			tipo := t.Tipo
+			if tipo == "" {
+				tipo = "edit"
+			}
+			tarefas = append(tarefas, map[string]string{
+				"id": id, "arquivo": arq, "tipo": tipo, "descricao": desc,
+			})
+		}
 		payload := map[string]interface{}{
-			"demanda":  body.Demanda,
-			"arquivos": body.Arquivos,
-			"tarefas":  body.Tarefas,
+			"demanda": body.Demanda,
+		}
+		if strings.TrimSpace(body.Branch) != "" {
+			payload["branch"] = strings.TrimSpace(body.Branch)
+		}
+		if len(body.Rules) > 0 {
+			payload["rules"] = body.Rules
+		}
+		if len(arquivos) > 0 {
+			payload["arquivos"] = arquivos
+		}
+		if len(tarefas) > 0 {
+			payload["tarefas"] = tarefas
 		}
 		if body.Raiz != "" && body.Raiz != "." {
 			payload["raiz"] = body.Raiz

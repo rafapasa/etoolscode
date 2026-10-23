@@ -287,16 +287,17 @@ header {
 .chat-input {
   flex: 1;
   background: var(--bg-card);
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
-  border-radius: 6px;
-  padding: 8px 12px;
+  border: 1px solid var(--border-color, #2d3a4d);
+  color: var(--text-main, #e8eef5);
+  border-radius: 8px;
+  padding: 10px 12px;
   resize: none;
   outline: none;
   font-size: 0.9rem;
   line-height: 1.4;
-  min-height: 40px;
-  overflow-y: hidden;
+  min-height: 100px; /* +150% vs 40px */
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .chat-input::placeholder {
@@ -307,10 +308,20 @@ header {
   background: var(--green);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 0 16px;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 2px;
 }
 
 .btn-send:hover {
@@ -1880,4 +1891,85 @@ body > .container {
 .act-row.act-err .act-icon,
 .act-row.act-err .act-main {
   color: #fca5a5 !important;
+}
+
+
+/* Nova issue — formulário estruturado (2x sm) */
+.modal-content.create-wide {
+  width: min(760px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+}
+.create-hint {
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+.create-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (max-width: 700px) {
+  .create-grid { grid-template-columns: 1fr; }
+}
+.create-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.create-label input,
+.create-label textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.create-demanda {
+  min-height: 88px;
+  resize: vertical;
+}
+.create-area {
+  min-height: 72px;
+  resize: vertical;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+}
+.create-tarefas {
+  min-height: 110px;
+  resize: vertical;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+}
+
+/* Aba Fonte — Monaco readonly */
+#fontePanel {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+#fontePanel.is-open,
+#fontePanel[style*="flex"] {
+  display: flex !important;
+}
+.fonte-editor {
+  flex: 1;
+  min-height: 200px;
+  height: 100%;
+}
+.src-row.src-file {
+  cursor: pointer;
+}
+.src-row.src-file:hover {
+  background: rgba(0, 170, 79, 0.1);
+  color: var(--text-main);
+}
+.src-row.src-file.active {
+  background: rgba(0, 170, 79, 0.18);
+  color: var(--text-main);
 }

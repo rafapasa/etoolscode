@@ -3,6 +3,7 @@ import { loadExplorer, loadProjectSelector, toggleExplorer, selectIssue, openIte
 import { renderIssuesForCurrent, runIssue } from './issues.js';
 import * as modals from './modals.js';
 import { initDiffPanel, loadDiffStatus } from './diff.js';
+import { initFontePanel } from './source.js';
 import { initActivityLog } from './activitylog.js';
 import { saveCurrentProject, state } from './state.js';
 
@@ -16,6 +17,7 @@ async function init(){
   }
   bindEvents();
   initDiffPanel();
+  initFontePanel();
   initActivityLog();
   document.querySelectorAll('[data-files-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
@@ -157,6 +159,9 @@ function bindEvents(){
   if(tc) tc.addEventListener('click', () => switchTab('chat'));
   const td = document.getElementById('tab-diff');
   if(td) td.addEventListener('click', () => switchTab('diff'));
+  const tf = document.getElementById('tab-fonte');
+  if(tf) tf.addEventListener('click', () => switchTab('fonte'));
+  window.addEventListener('tab:fonte', () => switchTab('fonte'));
   const bnc = document.getElementById('btnNewChat');
   if(bnc) bnc.addEventListener('click', () => createNewChat());
   const chatList = document.getElementById('chatList');
@@ -225,6 +230,7 @@ function switchTab(tab){
   const cp = document.getElementById('chatPanel');
   const ip = document.getElementById('issuesPanel');
   const dp = document.getElementById('diffPanel');
+  const fp = document.getElementById('fontePanel');
   const explorerPane = document.getElementById('explorerPane');
   const chatsPane = document.getElementById('chatsPane');
   const filesPanel = document.getElementById('filesPanel');
@@ -234,8 +240,12 @@ function switchTab(tab){
     dp.style.display = tab === 'diff' ? 'flex' : 'none';
     dp.classList.toggle('is-open', tab === 'diff');
   }
-  // sidebar: chats no chat; explorer em issues; em diff mantém explorer se houver projeto
-  if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff') ? 'block' : 'none';
+  if(fp) {
+    fp.style.display = tab === 'fonte' ? 'flex' : 'none';
+    fp.classList.toggle('is-open', tab === 'fonte');
+  }
+  // sidebar: chats no chat; explorer em issues/diff/fonte
+  if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff' || tab === 'fonte') ? 'block' : 'none';
   if(chatsPane) chatsPane.style.display = tab === 'chat' ? 'flex' : 'none';
   if(filesPanel) filesPanel.classList.add('visible');
   if(tab === 'issues') renderIssuesForCurrent();

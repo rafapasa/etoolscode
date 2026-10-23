@@ -139,6 +139,7 @@ func Start(cfg *config.Config) error {
 	api.Get("/issues", h.ListIssues)
 	api.Get("/projects", h.ListProjects)
 	api.Get("/tree/:project", h.ProjectTree)
+	api.Get("/source/:project/*", h.GetSourceFile)
 	api.Get("/base", h.GetBase)
 	api.Post("/base", h.SaveBase)
 	api.Post("/base/upload", h.UploadBase)

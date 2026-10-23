@@ -64,6 +64,7 @@
                 <div class="tab" id="tab-issues">Issues</div>
                 <div class="tab active" id="tab-chat">Chat</div>
                 <div class="tab" id="tab-diff">Diff</div>
+                <div class="tab" id="tab-fonte">Fonte</div>
             </div>
 
             <div class="content-area">
@@ -98,6 +99,13 @@
                         <button type="button" class="btn-small" id="btnDiffRefresh">Atualizar</button>
                     </div>
                     <div id="diffEditor" class="diff-editor diff-editor-full"></div>
+                </section>
+
+                <section class="chat-panel fonte-panel" id="fontePanel" style="display:none">
+                    <div class="diff-toolbar">
+                        <span class="muted small" id="fontePath">Selecione um arquivo em Fontes</span>
+                    </div>
+                    <div id="fonteEditor" class="fonte-editor"></div>
                 </section>
 
                 <aside class="files-panel" id="filesPanel">
@@ -142,14 +150,41 @@
                     id="btnSubmitUploadReplace">Upload</button></div>
         </div>
     </div>
-    <div class="modal" id="createModal">
-        <div class="modal-content sm">
-            <h3>Nova issue</h3><input id="crProject" placeholder="projeto"><input id="crFilename"
-                placeholder="issue-teste.json"><textarea id="crDemanda" placeholder="demanda"></textarea>
+        <div class="modal" id="createModal">
+        <div class="modal-content create-wide">
+            <h3>Nova issue</h3>
+            <p class="muted small create-hint">Preencha os campos abaixo (schema da issue). A pasta do código vem do <code>projeto.json</code> / Config — não precisa de raiz aqui.</p>
+            <div class="create-grid">
+                <label class="create-label">Projeto
+                    <input id="crProject" placeholder="nome do projeto">
+                </label>
+                <label class="create-label">Arquivo JSON
+                    <input id="crFilename" placeholder="01-minha-issue.json">
+                </label>
+                <label class="create-label">Branch (opcional)
+                    <input id="crBranch" placeholder="dev-123">
+                </label>
+            </div>
+            <label class="create-label">Demanda <span class="muted">— objetivo curto e direto</span>
+                <textarea id="crDemanda" class="create-demanda" placeholder="Ex.: Extrair struct X e reutilizar em Y. Não alterar comportamento."></textarea>
+            </label>
+            <label class="create-label">Arquivos permitidos <span class="muted">— um path relativo por linha</span>
+                <textarea id="crArquivos" class="create-area" placeholder="internal/dto/llm.go&#10;internal/llm/provider.go"></textarea>
+            </label>
+            <label class="create-label">Rules extras (opcional) <span class="muted">— uma por linha; somam às do base.json</span>
+                <textarea id="crRules" class="create-area" placeholder="Nao alterar assinatura publica de Foo"></textarea>
+            </label>
+            <label class="create-label">Tarefas <span class="muted">— uma por bloco; formato: arquivo | tipo | descrição</span>
+                <textarea id="crTarefas" class="create-tarefas" placeholder="internal/dto/llm.go | refactor | Extrair struct anonimo para LLMItemResolvido&#10;internal/llm/provider.go | edit | Usar dto.LLMItemResolvido no campo Itens"></textarea>
+            </label>
+            <p class="muted small">Dica: também pode colar o JSON completo da issue só no campo Demanda (se começar com {).</p>
             <div id="crAlert" class="alert"></div>
-            <div class="modal-actions"><button class="btn ghost" data-close="createModal">Cancelar</button><button
-                    class="btn primary" id="btnSubmitCreate">Criar</button></div>
+            <div class="modal-actions">
+                <button class="btn ghost" data-close="createModal">Cancelar</button>
+                <button class="btn primary" id="btnSubmitCreate">Criar</button>
+            </div>
         </div>
+    </div>
     </div>
     <div class="modal" id="uploadModal">
         <div class="modal-content sm">
