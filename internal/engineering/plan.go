@@ -4,6 +4,7 @@ package engineering
 type Brief struct {
 	Project     string `json:"project"`
 	Style       Style  `json:"style"`
+	Language    string `json:"language"` // go|typescript|python|dart|java|csharp|generic
 	Feature     string `json:"feature"`      // nome curto ex: TenantResolver
 	PackagePath string `json:"package_path"` // ex: internal/service ou internal/tenant
 	Description string `json:"description"`  // o que a feature deve fazer
@@ -14,6 +15,7 @@ type Brief struct {
 // Plan plano revisável antes do scaffold TDD.
 type Plan struct {
 	Style       Style        `json:"style"`
+	Language    string       `json:"language"`
 	Feature     string       `json:"feature"`
 	PackagePath string       `json:"package_path"`
 	ModulePath  string       `json:"module_path,omitempty"`

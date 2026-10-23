@@ -6,6 +6,7 @@ import { initDiffPanel, loadDiffStatus } from './diff.js';
 import { initFontePanel } from './source.js';
 import { initActivityLog } from './activitylog.js';
 import { initEngineering } from './engineering.js';
+import { initTestsPanel } from './tests.js';
 import { saveCurrentProject, state } from './state.js';
 
 async function init(){
@@ -21,6 +22,7 @@ async function init(){
   initFontePanel();
   initActivityLog();
   initEngineering();
+  initTestsPanel();
   document.querySelectorAll('[data-files-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchFilesTab(btn.dataset.filesTab));
   });
@@ -164,6 +166,8 @@ function bindEvents(){
   const tf = document.getElementById('tab-fonte');
   if(tf) tf.addEventListener('click', () => switchTab('fonte'));
   window.addEventListener('tab:fonte', () => switchTab('fonte'));
+  const tt = document.getElementById('tab-test');
+  if(tt) tt.addEventListener('click', () => switchTab('test'));
   const bnc = document.getElementById('btnNewChat');
   if(bnc) bnc.addEventListener('click', () => createNewChat());
   const chatList = document.getElementById('chatList');
@@ -246,8 +250,10 @@ function switchTab(tab){
     fp.style.display = tab === 'fonte' ? 'flex' : 'none';
     fp.classList.toggle('is-open', tab === 'fonte');
   }
+  const tp = document.getElementById('testPanel');
+  if(tp) tp.style.display = tab === 'test' ? 'flex' : 'none';
   // sidebar: chats no chat; explorer em issues/diff/fonte
-  if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff' || tab === 'fonte') ? 'block' : 'none';
+  if(explorerPane) explorerPane.style.display = (tab === 'issues' || tab === 'diff' || tab === 'fonte' || tab === 'test') ? 'block' : 'none';
   if(chatsPane) chatsPane.style.display = tab === 'chat' ? 'flex' : 'none';
   if(filesPanel) filesPanel.classList.add('visible');
   if(tab === 'issues') renderIssuesForCurrent();

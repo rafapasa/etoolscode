@@ -74,6 +74,7 @@ async function buildPlan() {
   const body = {
     project: val('engProject'),
     style: val('engStyle'),
+    language: val('engLanguage') || 'go',
     feature: val('engFeature'),
     package_path: val('engPackage'),
     description: val('engDescription'),

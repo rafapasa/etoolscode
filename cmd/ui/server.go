@@ -144,6 +144,8 @@ func Start(cfg *config.Config) error {
 	api.Post("/engineering/plan", h.BuildEngineeringPlan)
 	api.Post("/engineering/preview", h.PreviewEngineeringScaffold)
 	api.Post("/engineering/scaffold", h.ScaffoldEngineering)
+	api.Get("/test/suggest", h.SuggestTestCommand)
+	api.Post("/test/run", h.RunProjectTests)
 	api.Get("/source/:project/*", h.GetSourceFile)
 	api.Get("/base", h.GetBase)
 	api.Post("/base", h.SaveBase)

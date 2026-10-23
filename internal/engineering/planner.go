@@ -2,6 +2,7 @@ package engineering
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
@@ -34,8 +35,10 @@ func BuildPlan(b Brief) (*Plan, error) {
 
 	methods := defaultMethods(b.Style, iface, b.Description)
 
+	lang := normalizeLang(b.Language)
 	p := &Plan{
 		Style:       b.Style,
+		Language:    lang,
 		Feature:     b.Feature,
 		PackagePath: b.PackagePath,
 		ModulePath:  strings.TrimSpace(b.ModulePath),
@@ -63,8 +66,73 @@ func BuildPlan(b Brief) (*Plan, error) {
 			"Não alterar arquivos fora da lista do plano.",
 		},
 	}
+	p = applyLanguagePaths(p, lang)
 	return p, nil
 }
+
+func normalizeLang(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	switch s {
+	case "go", "golang":
+		return "go"
+	case "ts", "typescript", "js", "javascript":
+		return "typescript"
+	case "py", "python":
+		return "python"
+	case "dart", "flutter":
+		return "dart"
+	case "java", "kotlin":
+		return "java"
+	case "cs", "csharp", "c#":
+		return "csharp"
+	case "":
+		return "go" // default histórico; UI deve enviar a linguagem
+	default:
+		return "generic"
+	}
+}
+
+func applyLanguagePaths(p *Plan, lang string) *Plan {
+	if p == nil {
+		return p
+	}
+	ext := map[string]string{
+		"go": ".go", "typescript": ".ts", "python": ".py",
+		"dart": ".dart", "java": ".java", "csharp": ".cs", "generic": ".txt",
+	}[lang]
+	if ext == "" {
+		ext = ".txt"
+	}
+	testSuffix := map[string]string{
+		"go": "_test.go", "typescript": ".test.ts", "python": "_test.py",
+		"dart": "_test.dart", "java": "Test.java", "csharp": "Tests.cs", "generic": "_test.txt",
+	}[lang]
+	for i := range p.Interfaces {
+		base := strings.TrimSuffix(strings.TrimSuffix(p.Interfaces[i].File, filepath.Ext(p.Interfaces[i].File)), "_test")
+		// rebuild from package path + snake name
+		name := toSnake(p.Interfaces[i].Name)
+		dir := p.PackagePath
+		if lang == "go" {
+			// keep planner paths for go
+			continue
+		}
+		p.Interfaces[i].File = dir + "/" + name + "_interface" + ext
+		p.Interfaces[i].StubFile = dir + "/" + name + ext
+		if lang == "java" {
+			p.Interfaces[i].TestFile = dir + "/" + p.Interfaces[i].Name + testSuffix
+		} else {
+			p.Interfaces[i].TestFile = dir + "/" + name + testSuffix
+		}
+		_ = base
+	}
+	// refresh test_files
+	p.TestFiles = nil
+	for _, iface := range p.Interfaces {
+		p.TestFiles = append(p.TestFiles, iface.TestFile)
+	}
+	return p
+}
+
 
 func defaultPackage(style Style, feature string) string {
 	base := strings.ToLower(exportName(feature))

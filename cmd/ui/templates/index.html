@@ -66,6 +66,7 @@
                 <div class="tab active" id="tab-chat">Chat</div>
                 <div class="tab" id="tab-diff">Diff</div>
                 <div class="tab" id="tab-fonte">Fonte</div>
+                <div class="tab" id="tab-test">Teste</div>
             </div>
 
             <div class="content-area">
@@ -107,6 +108,15 @@
                         <span class="muted small" id="fontePath">Selecione um arquivo em Fontes</span>
                     </div>
                     <div id="fonteEditor" class="fonte-editor"></div>
+                </section>
+
+                <section class="chat-panel test-panel" id="testPanel" style="display:none">
+                    <div class="diff-toolbar" style="gap:8px;flex-wrap:wrap">
+                        <input id="testCommand" class="test-cmd-input" placeholder="comando de teste (ex: go test ./...)" style="flex:1;min-width:200px">
+                        <button type="button" class="btn-small" id="btnSuggestTests">Sugerir</button>
+                        <button type="button" class="btn primary" id="btnRunTests">▶ Rodar testes</button>
+                    </div>
+                    <pre id="testOutput" class="test-output">Selecione o projeto e clique em Sugerir ou informe o comando. Funciona com Go, npm, pytest, Flutter, Maven, Gradle, dotnet…</pre>
                 </section>
 
                 <aside class="files-panel" id="filesPanel">
@@ -261,6 +271,17 @@
                 </label>
                 <label class="create-label">Estilo
                     <select id="engStyle"></select>
+                </label>
+                <label class="create-label">Linguagem
+                    <select id="engLanguage">
+                        <option value="go">Go</option>
+                        <option value="typescript">TypeScript / JS</option>
+                        <option value="python">Python</option>
+                        <option value="dart">Dart / Flutter</option>
+                        <option value="java">Java</option>
+                        <option value="csharp">C#</option>
+                        <option value="generic">Genérico</option>
+                    </select>
                 </label>
                 <label class="create-label">Branch (opcional)
                     <input id="engBranch" placeholder="dev-123">
