@@ -46,6 +46,9 @@ type Config struct {
 	// GitAutoBranch cria branch dsac/... antes de rodar issue (default true).
 	GitAutoBranch bool `json:"git_auto_branch"`
 
+	// ChatMaxIters limite de turnos LLM+tools por mensagem no chat (default 32).
+	ChatMaxIters int `json:"chat_max_iters"`
+
 	// interno
 	configFilePath string `json:"-"`
 }
@@ -62,6 +65,8 @@ type uiPersist struct {
 	GrokApiKey     string `json:"grok_api_key,omitempty"`
 
 	HttpPort int `json:"http_port,omitempty"`
+
+	ChatMaxIters int `json:"chat_max_iters,omitempty"`
 }
 
 func configPath() string {
@@ -85,6 +90,7 @@ func NewConfig() *Config {
 		BaseJsonPath:    getEnv("DS_AC_BASE", "/home/opc/prj/issues/base.json"),
 		ProjetoJsonPath: getEnv("DS_AC_PROJETO", ""),
 		GitAutoBranch:   getEnv("DSAC_GIT_AUTO_BRANCH", "true") != "false",
+		ChatMaxIters:    getEnvAsInt("CHAT_MAX_ITERS", 32),
 		configFilePath:  configPath(),
 	}
 
@@ -123,6 +129,9 @@ func NewConfig() *Config {
 			}
 			if persisted.HttpPort != 0 && getEnv("HTTP_PORT", "") == "" {
 				cfg.HttpPort = persisted.HttpPort
+			}
+			if persisted.ChatMaxIters > 0 && getEnv("CHAT_MAX_ITERS", "") == "" {
+				cfg.ChatMaxIters = persisted.ChatMaxIters
 			}
 		}
 	}
@@ -192,6 +201,7 @@ func (c *Config) Save() error {
 		OpenAIApiKey:   c.OpenAIApiKey,
 		GrokApiKey:     c.GrokApiKey,
 		HttpPort:       c.HttpPort,
+		ChatMaxIters:   c.ChatMaxIters,
 	}
 	data, err := json.MarshalIndent(persist, "", "  ")
 	if err != nil {
@@ -223,4 +233,20 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+
+// EffectiveChatMaxIters retorna o limite de turnos do chat (mín 4, máx 100, default 32).
+func (c *Config) EffectiveChatMaxIters() int {
+	n := 32
+	if c != nil && c.ChatMaxIters > 0 {
+		n = c.ChatMaxIters
+	}
+	if n < 4 {
+		n = 4
+	}
+	if n > 100 {
+		n = 100
+	}
+	return n
 }

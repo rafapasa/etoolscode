@@ -1,4 +1,4 @@
-import { pushActivity } from './activitylog.js';
+import { pushActivity, setChatTurnCounter } from './activitylog.js';
 import { saveCurrentChat, state } from './state.js';
 
 function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -222,7 +222,10 @@ export async function sendMessage(){
         if(!line.startsWith('data: ')) continue;
         try{
           const data=JSON.parse(line.slice(6));
-          if(data.type==='delta'){
+          if(data.type==='turn'){
+            setChatTurnCounter(data.current, data.max, false);
+          }
+          else if(data.type==='delta'){
             const box=chatBox();
             const pinned=nearBottom(box);
             full+=data.content||'';
@@ -231,6 +234,12 @@ export async function sendMessage(){
           }
           else if(data.type==='tool'){ addToolLine(data); }
           else if(data.type==='error'){ if(assistantDiv) assistantDiv.innerHTML+=`<br><span style="color:#b91c1c">❌ ${escapeHtml(data.error)}</span>`; }
+          else if(data.type==='done'){
+            setChatTurnCounter(data.current||0, data.max||0, !!data.limit_reached);
+            if(data.limit_reached){
+              showLimitActions(assistantDiv);
+            }
+          }
         }catch{}
       }
     }
@@ -253,7 +262,10 @@ async function sendMessageWithText(text, assistantDiv){
         if(!line.startsWith('data: ')) continue;
         try{
           const data=JSON.parse(line.slice(6));
-          if(data.type==='delta'){
+          if(data.type==='turn'){
+            setChatTurnCounter(data.current, data.max, false);
+          }
+          else if(data.type==='delta'){
             const box=chatBox();
             const pinned=nearBottom(box);
             full+=data.content||'';
@@ -262,6 +274,12 @@ async function sendMessageWithText(text, assistantDiv){
           }
           else if(data.type==='tool'){ addToolLine(data); }
           else if(data.type==='error'){ if(assistantDiv) assistantDiv.innerHTML+=`<br><span style="color:#b91c1c">❌ ${escapeHtml(data.error)}</span>`; }
+          else if(data.type==='done'){
+            setChatTurnCounter(data.current||0, data.max||0, !!data.limit_reached);
+            if(data.limit_reached){
+              showLimitActions(assistantDiv);
+            }
+          }
         }catch{}
       }
     }

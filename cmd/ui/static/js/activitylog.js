@@ -116,3 +116,22 @@ function escapeHtml(s){
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
+
+
+/** Atualiza contador de turnos do chat (esquerda do Limpar). */
+export function setChatTurnCounter(current, max, limitReached) {
+  const el = document.getElementById('chatTurnCounter');
+  if (!el) return;
+  if (!max || max < 1) {
+    el.textContent = '—';
+    el.classList.remove('is-warn', 'is-limit');
+    return;
+  }
+  const c = current || 0;
+  el.textContent = `${c}/${max}`;
+  el.classList.toggle('is-warn', c >= Math.ceil(max * 0.8) && !limitReached);
+  el.classList.toggle('is-limit', !!limitReached);
+  el.title = limitReached
+    ? `Limite de rodadas atingido (${c}/${max})`
+    : `Turno ${c} de ${max} neste pedido`;
+}

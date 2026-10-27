@@ -75,6 +75,7 @@ func (h *Handler) GetConfig(c *fiber.Ctx) error {
 		"issues_dir":       h.cfg.IssuesDir,
 		"http_port":        h.cfg.HttpPort,
 		"llm_client":       h.cfg.LlmClient,
+		"chat_max_iters":   h.cfg.EffectiveChatMaxIters(),
 		"deepseek_api_key": maskKey(h.cfg.DeepSeekApiKey),
 		"meta_api_key":     maskKey(h.cfg.MetaApiKey),
 		"gemini_api_key":   maskKey(h.cfg.GeminiApiKey),
@@ -95,6 +96,7 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 		GrokApiKey     string `json:"grok_api_key"`
 		HttpPort       int    `json:"http_port"`
 		LlmClient      int    `json:"llm_client"`
+		ChatMaxIters   int    `json:"chat_max_iters"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).SendString(err.Error())
@@ -120,6 +122,9 @@ func (h *Handler) SaveConfig(c *fiber.Ctx) error {
 	}
 	if body.LlmClient != 0 {
 		h.cfg.LlmClient = body.LlmClient
+	}
+	if body.ChatMaxIters > 0 {
+		h.cfg.ChatMaxIters = body.ChatMaxIters
 	}
 	if err := h.cfg.Save(); err != nil {
 		return c.Status(500).SendString(err.Error())

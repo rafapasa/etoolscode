@@ -80,9 +80,22 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 	projectRoot := h.service.ResolveProjectRoot(session.Project)
 	tools := chat.GetTools()
 	llm := chat.NewChatLLM(h.cfg)
+	maxIters := 32
+	if h.cfg != nil {
+		maxIters = h.cfg.EffectiveChatMaxIters()
+	}
 
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		for iter := 0; iter < 16; iter++ {
+		limitHit := false
+		lastHadTools := false
+
+		for iter := 0; iter < maxIters; iter++ {
+			writeSSEChat(w, fiber.Map{
+				"type":    "turn",
+				"current": iter + 1,
+				"max":     maxIters,
+			})
+
 			messages := chat.SanitizeMessages(session.Messages)
 			var full string
 			var toolCalls []dto.ToolCall
@@ -114,20 +127,22 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 						log.Printf("[chat] persist: %v", err)
 					}
 				}
-				writeSSEChat(w, fiber.Map{"type": "done", "content": full})
+				writeSSEChat(w, fiber.Map{
+					"type":    "done",
+					"content": full,
+					"current": iter + 1,
+					"max":     maxIters,
+				})
 				return
 			}
 
+			lastHadTools = true
 			assistant := dto.Message{Role: "assistant", Content: full, ToolCalls: toolCalls}
 			session.Messages = append(session.Messages, assistant)
 
 			for _, tc := range toolCalls {
 				result := chat.ExecuteTool(projectRoot, tc.Function.Name, tc.Function.Arguments)
 				writeSSEChat(w, toolEvent(tc.Function.Name, tc.Function.Arguments, result))
-				// Sempre passar o Content real pra LLM. O Success é só hint pra UI
-				// (mostra ícone de erro no chat). Quando run_command falha (exit != 0),
-				// o Content tem "exit=N\n<stderr do compilador>" e descartar isso
-				// deixa o LLM cego (não vê o erro real do build/teste).
 				content := result.Content
 				if content == "" && result.Error != "" {
 					content = "ERRO: " + result.Error
@@ -145,8 +160,63 @@ func (h *ChatHandler) PostMessage(c *fiber.Ctx) error {
 			if err := h.service.PersistTurn(session); err != nil {
 				log.Printf("[chat] persist tools: %v", err)
 			}
+
+			// Última iteração e ainda há tools: não termina mudo — pede resumo em texto.
+			if iter == maxIters-1 {
+				limitHit = true
+				break
+			}
 		}
-		writeSSEChat(w, fiber.Map{"type": "done", "content": "limite de iterações atingido"})
+
+		// Limite atingido: turno de fechamento só com texto (sem tools).
+		if limitHit || lastHadTools {
+			session.Messages = append(session.Messages, dto.Message{
+				Role: "user",
+				Content: "⚠️ LIMITE DE RODADAS ATINGIDO neste turno. Não use tools agora. " +
+					"Resuma em português o que já foi feito, o que ficou pendente e o próximo passo recomendado. Seja objetivo.",
+			})
+			messages := chat.SanitizeMessages(session.Messages)
+			var full string
+			err := llm.StreamChat(messages, nil,
+				func(delta string) {
+					full += delta
+					writeSSEChat(w, fiber.Map{"type": "delta", "content": delta})
+				},
+				func(tc dto.ToolCall) {}, // ignora tools no fechamento
+			)
+			// remove o user sintético do histórico persistido (evita poluir próxima rodada)
+			if len(session.Messages) > 0 && strings.Contains(session.Messages[len(session.Messages)-1].Content, "LIMITE DE RODADAS") {
+				session.Messages = session.Messages[:len(session.Messages)-1]
+			}
+			if err != nil {
+				writeSSEChat(w, fiber.Map{"type": "error", "error": err.Error()})
+				return
+			}
+			if full != "" {
+				session.Messages = append(session.Messages, dto.Message{Role: "assistant", Content: full})
+				if err := h.service.PersistTurn(session); err != nil {
+					log.Printf("[chat] persist limit summary: %v", err)
+				}
+			}
+			writeSSEChat(w, fiber.Map{
+				"type":          "done",
+				"content":       full,
+				"limit_reached": true,
+				"current":       maxIters,
+				"max":           maxIters,
+				"message":       "Limite de rodadas atingido. Use Continuar ou Resumo.",
+			})
+			return
+		}
+
+		writeSSEChat(w, fiber.Map{
+			"type":          "done",
+			"content":       "",
+			"limit_reached": true,
+			"current":       maxIters,
+			"max":           maxIters,
+			"message":       "Limite de rodadas atingido.",
+		})
 	})
 
 	return nil

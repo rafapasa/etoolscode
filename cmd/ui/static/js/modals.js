@@ -143,6 +143,8 @@ export async function openConfigModal(){
     const cfg = await apiGet('/api/config');
     const sel = document.getElementById('cfgLlmClient');
     if (sel) sel.value = String(cfg.llm_client || 1);
+    const iters = document.getElementById('cfgChatMaxIters');
+    if (iters) iters.value = String(cfg.chat_max_iters || 32);
     const mark = (id, ok) => { const el=document.getElementById(id); if(el) el.textContent = ok ? '(definida)' : '(vazia)'; };
     mark('cfgHasDeepseek', cfg.has_deepseek);
     mark('cfgHasMeta', cfg.has_meta);
@@ -175,6 +177,7 @@ export async function saveConfig(){
     if(name && root) projects.push({name, root});
   });
   const llm_client = parseInt(document.getElementById('cfgLlmClient')?.value || '1', 10);
+  const chat_max_iters = parseInt(document.getElementById('cfgChatMaxIters')?.value || '32', 10);
   const deepseek_api_key = document.getElementById('cfgDeepseekKey')?.value.trim() || '';
   const meta_api_key = document.getElementById('cfgMetaKey')?.value.trim() || '';
   const gemini_api_key = document.getElementById('cfgGeminiKey')?.value.trim() || '';
@@ -189,7 +192,7 @@ export async function saveConfig(){
     const resCfg = await fetch('/api/config', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({llm_client, deepseek_api_key, meta_api_key, gemini_api_key, grok_api_key, issues_dir})
+      body: JSON.stringify({llm_client, deepseek_api_key, meta_api_key, gemini_api_key, grok_api_key, issues_dir, chat_max_iters})
     });
     if(!resCfg.ok) throw new Error(await resCfg.text());
     showAlert('wsAlert','✅ Configurações salvas', true);
