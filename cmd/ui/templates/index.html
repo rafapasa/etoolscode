@@ -243,14 +243,14 @@
                 <input id="cfgGeminiKey" type="password" placeholder="(deixe vazio para manter)" style="width:100%;margin-bottom:8px">
                 <label class="muted small">Grok / xAI API Key <span id="cfgHasGrok" class="muted"></span></label>
                 <input id="cfgGrokKey" type="password" placeholder="xai-... (deixe vazio para manter)" style="width:100%;margin-bottom:8px">
+                <div id="cfgChatItersBlock" class="cfg-chat-iters" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-color,#2d3a4d)">
+                    <label class="create-label">Limite de rodadas no chat (por mensagem)
+                        <input type="number" id="cfgChatMaxIters" min="4" max="100" step="1" value="32" style="max-width:120px">
+                    </label>
+                    <p class="muted small">Cada rodada = uma chamada à LLM (com ou sem tools). Ao atingir o limite, a IA resume o andamento e oferece Continuar / Resumo. Padrão: 32 (antes era 16 fixo).</p>
+                </div>
             </div>
             <div id="wsAlert" class="alert"></div>
-            <div id="cfgChatItersBlock" class="cfg-chat-iters" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-color,#2d3a4d)">
-                <label class="create-label">Limite de rodadas no chat (por mensagem)
-                    <input type="number" id="cfgChatMaxIters" min="4" max="100" step="1" value="32" style="max-width:120px">
-                </label>
-                <p class="muted small">Cada rodada = uma chamada à LLM (com ou sem tools). Ao atingir o limite, a IA resume o andamento e oferece Continuar / Resumo. Padrão: 32 (antes era 16 fixo).</p>
-            </div>
             <div class="modal-actions">
                 <button class="btn ghost" data-close="configModal">Cancelar</button>
                 <button class="btn primary" id="btnConfigSave">Salvar</button>
