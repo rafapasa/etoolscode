@@ -118,20 +118,37 @@ function escapeHtml(s){
 }
 
 
-/** Atualiza contador de turnos do chat (esquerda do Limpar). */
+/** Atualiza contador de turnos do chat (barra + valor). */
 export function setChatTurnCounter(current, max, limitReached) {
-  const el = document.getElementById('chatTurnCounter');
-  if (!el) return;
+  const root = document.getElementById('chatTurnCounter');
+  const val = document.getElementById('chatTurnValue');
+  const fill = document.getElementById('chatTurnFill');
+  const btn = document.getElementById('btnChatContinueFooter');
+  if (!root) return;
   if (!max || max < 1) {
-    el.textContent = '—';
-    el.classList.remove('is-warn', 'is-limit');
+    if (val) val.textContent = '—';
+    if (fill) fill.style.width = '0%';
+    root.classList.remove('is-warn', 'is-limit', 'is-active');
+    root.title = 'Turnos LLM deste pedido no chat';
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.remove('is-pulse');
+    }
     return;
   }
-  const c = current || 0;
-  el.textContent = `${c}/${max}`;
-  el.classList.toggle('is-warn', c >= Math.ceil(max * 0.8) && !limitReached);
-  el.classList.toggle('is-limit', !!limitReached);
-  el.title = limitReached
-    ? `Limite de rodadas atingido (${c}/${max})`
+  const c = Math.max(0, current || 0);
+  const pct = Math.min(100, Math.round((c / max) * 100));
+  if (val) val.textContent = `${c}/${max}`;
+  if (fill) fill.style.width = pct + '%';
+  root.classList.add('is-active');
+  root.classList.toggle('is-warn', c >= Math.ceil(max * 0.8) && !limitReached);
+  root.classList.toggle('is-limit', !!limitReached);
+  root.title = limitReached
+    ? `Limite atingido (${c}/${max}). Use Continuar para seguir.`
     : `Turno ${c} de ${max} neste pedido`;
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.toggle('is-pulse', !!limitReached);
+  }
 }
+

@@ -261,8 +261,13 @@
     <div id="activityLog" class="activity-log is-open">
         <div class="activity-log-bar">
             <button type="button" id="btnActivityLogToggle" class="btn-small act-toggle">▾ Log</button>
-            <span id="chatTurnCounter" class="chat-turn-counter" title="Turnos LLM deste pedido no chat">—</span>
-            <span class="muted small">leituras · escritas · comandos · erros</span>
+            <div id="chatTurnCounter" class="chat-turn-counter" title="Turnos LLM deste pedido no chat" role="status">
+                <span class="ctc-label">Rodadas</span>
+                <div class="ctc-track" aria-hidden="true"><div class="ctc-fill" id="chatTurnFill"></div></div>
+                <span class="ctc-value" id="chatTurnValue">—</span>
+            </div>
+            <button type="button" id="btnChatContinueFooter" class="btn-small btn-continue" title="Continuar de onde parou" disabled>▶ Continuar</button>
+            <span class="muted small act-hint">leituras · escritas · comandos · erros</span>
             <button type="button" id="btnActivityLogClear" class="btn-small" title="Limpar">Limpar</button>
         </div>
         <div id="activityLogBody" class="activity-log-body"></div>

@@ -18,6 +18,60 @@ function stickScroll(el, pinned){
   if(pinned && el) el.scrollTop = el.scrollHeight;
 }
 
+function removeChatActions(){
+  document.querySelectorAll('.chat-limit-actions').forEach(n => n.remove());
+}
+
+function showLimitActions(assistantDiv){
+  removeChatActions();
+  const wrap=document.createElement('div');
+  wrap.className='chat-limit-actions message assistant';
+  wrap.innerHTML=`
+    <div class="chat-limit-banner">⚠ Limite de rodadas deste pedido. A operação pode estar incompleta.</div>
+    <div class="chat-limit-btns">
+      <button type="button" class="btn primary" data-act="continue">▶ Continuar</button>
+      <button type="button" class="btn-small" data-act="resumo">Resumo</button>
+    </div>`;
+  const box=chatBox();
+  if(box) box.appendChild(wrap);
+  else if(assistantDiv && assistantDiv.parentElement) assistantDiv.parentElement.appendChild(wrap);
+  stickScroll(box, true);
+  wrap.querySelector('[data-act="continue"]')?.addEventListener('click', () => {
+    removeChatActions();
+    continueChatWork();
+  });
+  wrap.querySelector('[data-act="resumo"]')?.addEventListener('click', () => {
+    removeChatActions();
+    resumoChatWork();
+  });
+  // destaca botão do rodapé
+  const fb=document.getElementById('btnChatContinueFooter');
+  if(fb){ fb.disabled=false; fb.classList.add('is-pulse'); }
+}
+
+export function continueChatWork(){
+  return sendMessageWithPreset('Continue de onde parou. Não refaça o que já está concluído; complete apenas o que falta.');
+}
+
+export function resumoChatWork(){
+  return sendMessageWithPreset('Faça um resumo objetivo do que já foi feito neste chat, o que ficou pendente e o próximo passo recomendado. Não use tools.');
+}
+
+async function sendMessageWithPreset(text){
+  const input=document.getElementById('chatInput');
+  if(input){
+    input.value=text;
+    if(typeof resizeChatInput==='function') resizeChatInput();
+  }
+  await sendMessage();
+}
+
+// rodapé / atalhos
+if(typeof window!=='undefined'){
+  window.__etoolsChatContinue = () => continueChatWork();
+}
+
+
 export function addMessage(role, content, returnEl=false, forceScroll=false){
   const c=chatBox();
   if(!c) return null;
